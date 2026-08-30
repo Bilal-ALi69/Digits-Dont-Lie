@@ -25,6 +25,8 @@ Digits_Dont_Lie/
 ├── README.md
 ├── .gitignore
 ├── scripts/                     ← cross-platform setup (see Quick Start)
+├── docs/
+│   └── DEVELOPMENT_LOG.md       ← engineering record (see Development History)
 ├── Backend/
 │   ├── .env                     ← secrets (git-ignored)
 │   ├── .env.example             ← template for .env
@@ -38,7 +40,7 @@ Digits_Dont_Lie/
 │   │   ├── models.py            ← Pydantic models & enums
 │   │   ├── orchestrator.py      ← unified analysis router
 │   │   └── ...
-│   └── tests/                   ← 521 passing tests
+│   └── tests/                   ← 565 passing tests
 └── Frontend/
     ├── app/                     ← Next.js App Router
     │   └── api/                 ← Server-side proxy routes (hold BACKEND_API_KEY)
@@ -112,8 +114,18 @@ cd Backend
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env   # edit and set API_KEY
-uvicorn app.api.server:app --reload --host 0.0.0.0 --port 8000
+uvicorn app.api.server:app --reload --host 127.0.0.1 --port 8000
 ```
+
+`127.0.0.1` rather than `0.0.0.0`: bound to `0.0.0.0` the API answers every
+machine on the same network, and that interacts badly with one setting.
+`ENVIRONMENT=development` **disables API-key authentication entirely and
+publishes `/docs`, `/redoc` and `/openapi.json`** — the server prints a warning
+saying so on every startup. A generated `.env` ships it commented out, so a
+fresh install is authenticated by default and you have to opt in; the two
+together are what turn a demo laptop on venue wifi into an open, unauthenticated
+OCR and analysis endpoint. If you have uncommented it for local work, keep the
+bind address on `127.0.0.1`. See `DEPLOYMENT.md` before exposing this anywhere.
 
 #### Frontend
 
@@ -123,6 +135,26 @@ npm install          # or pnpm install
 cp .env.local.example .env.local   # set BACKEND_URL and BACKEND_API_KEY
 npm run dev          # http://localhost:3000
 ```
+
+### Running it for a demo
+
+`npm run dev` recompiles each route the first time it is opened, so the first
+click on a page stalls for a moment. For anything being shown to an audience,
+serve the production build instead — it is compiled ahead of time and starts in
+well under a second:
+
+```bash
+cd Frontend
+npm run build
+npm start            # http://localhost:3000
+```
+
+Both servers must be running. The footer reports which mode the interface is
+actually in: **Backend: Connected** means results come from the FastAPI engines;
+**Backend: Offline** means the browser-side fallback produced them. If the
+backend stops mid-session, an amber banner says so and the result below it is a
+fallback result — the interface never presents client-side output as though it
+came from the real engine.
 
 The frontend never talks to the FastAPI backend directly from the browser — `lib/api.ts` calls this app's own `/api/*` route handlers (`app/api/**/route.ts`), which hold `BACKEND_URL`/`BACKEND_API_KEY` server-side and proxy the request through. This keeps the shared API key out of the client JS bundle.
 
@@ -138,6 +170,7 @@ All endpoints except `/api/health` require an `X-API-Key` header.
 |---|---|---|
 | `GET` | `/api/health` | Server status, version, available engines |
 | `POST` | `/api/classify` | Classify a value (returns candidates + `classification_id`) |
+| `POST` | `/api/classify/image` | Identify an uploaded image (multimodal); returns a guess or `null` |
 | `POST` | `/api/analyze` | Full analysis of a value, dataset, or text |
 | `POST` | `/api/analyze/upload` | Upload a file (.csv, .xlsx, .pdf, .jpg, .png) for analysis |
 
@@ -197,7 +230,7 @@ Two sections are worth reading before changing anything substantial:
 
 ```bash
 cd Backend
-pytest tests/ -v            # full suite (521 tests)
+pytest tests/ -v            # full suite (565 tests)
 pytest tests/test_benford.py # Benford-specific tests
 pytest -x                   # stop on first failure
 ```
