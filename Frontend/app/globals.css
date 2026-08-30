@@ -1,0 +1,2329 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700;800&display=swap');
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Motion. One easing curve for arrivals, one for the press release.
+     --ease-rise decelerates hard and settles without overshoot: things arrive
+     rather than bouncing into place. --ease-press overshoots slightly, which is
+     what makes a button feel physical when it springs back. */
+  --ease-rise: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-press: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --ease-sweep: cubic-bezier(0.45, 0, 0.55, 1);
+  /* --ease-exit mirrors --ease-rise (control points inverted), so a surface
+     leaves along the path it arrived on instead of decelerating on the way
+     out — a dismissal that eases out reads as reluctant. */
+  --ease-exit: cubic-bezier(0.64, 0, 0.78, 0);
+  /* Replaces cubic-bezier(0.4, 0, 0.2, 1) — Material's standard curve, which
+     had crept into four rules alongside the tokens above. */
+  --ease-standard: cubic-bezier(0.32, 0.72, 0, 1);
+  /* A real spring sampled into linear(): damping ~0.8, response ~0.35s. Used
+     where overshoot is earned — the release of a press, not its start. */
+  --spring-press: linear(
+    0, 0.0033, 0.0263, 0.0838, 0.1849, 0.3232, 0.4785, 0.6289, 0.7565,
+    0.8542, 0.9226, 0.9659, 0.9903, 1.0018, 1.0053, 1.0047, 1.0028,
+    1.0012, 1.0003, 1
+  );
+  /* The sheet spring from Designing Fluid Interfaces — damping 0.8, response
+     0.35s — sampled into linear(). Peaks at 1.0152, so a surface using it
+     overshoots by about one and a half percent and settles back: enough to read
+     as physical, not enough to read as bouncy. Used for surfaces that arrive
+     (the brand panel), where --spring-press is for controls that release. */
+  --spring-pop: linear(
+    0, 0.057, 0.1863, 0.3418, 0.4957, 0.6327,
+    0.7462, 0.8349, 0.9009, 0.9475, 0.9786, 0.9979,
+    1.0088, 1.0138, 1.0152, 1.0143, 1.0124, 1.01,
+    1.0077, 1.0056, 1.0039, 1.0025, 1.0015, 1.0008,
+    1.0003, 1
+  );
+  /* 520ms sat outside Apple's 0.3-0.4s response band, and the stagger below
+     stacked on top of it — the last element of a view used to land a full
+     second after the click. */
+  --dur-rise: 380ms;
+  --dur-press: 180ms;
+  --dur-exit: 200ms;
+}
+
+.font-display { font-family: var(--font-display); }
+.font-mono { font-family: var(--font-mono); }
+
+@theme inline {
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-elevated: var(--elevated);
+  --color-elevated-foreground: var(--elevated-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-muted: var(--success-muted);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-muted: var(--warning-muted);
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-danger-muted: var(--danger-muted);
+  --color-surface-page: var(--surface-page);
+  --color-surface-card: var(--surface-card);
+  --color-surface-inset: var(--surface-inset);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-popover: var(--surface-popover);
+  --color-hairline: var(--hairline);
+  --color-hairline-strong: var(--hairline-strong);
+  --color-heading: var(--heading);
+  --color-nav: var(--nav);
+  --color-orange: var(--orange);
+  --color-orange-ink: var(--orange-ink);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', 'Cascadia Code', monospace;
+}
+
+/* ─── Type scale ─────────────────────────────────────────────────────────────
+   Replaces twenty hand-picked sizes between 0.6rem and 3rem. Tracking is
+   size-specific and moves negative as type grows — large text reads too loose
+   at the tracking small text needs, which is why a single letter-spacing is
+   always wrong somewhere. Leading moves inversely: tight on display, open on
+   body. Each step carries all three, so they cannot drift apart at a call site.
+   -------------------------------------------------------------------------- */
+@theme {
+  /* 10px — uppercase meta labels, footnote credits */
+  --text-micro: 0.625rem;
+  --text-micro--letter-spacing: 0.012em;
+  --text-micro--line-height: 1.45;
+
+  /* 11px — dense secondary detail */
+  --text-mini: 0.6875rem;
+  --text-mini--letter-spacing: 0.008em;
+  --text-mini--line-height: 1.5;
+
+  /* 12px — captions, helper text */
+  --text-caption: 0.75rem;
+  --text-caption--letter-spacing: 0.004em;
+  --text-caption--line-height: 1.5;
+
+  /* 13px — supporting copy */
+  --text-footnote: 0.8125rem;
+  --text-footnote--letter-spacing: 0em;
+  --text-footnote--line-height: 1.55;
+
+  /* 14px — default body */
+  --text-body: 0.875rem;
+  --text-body--letter-spacing: -0.002em;
+  --text-body--line-height: 1.6;
+
+  /* 15px — emphasised body, primary control labels */
+  --text-callout: 0.9375rem;
+  --text-callout--letter-spacing: -0.005em;
+  --text-callout--line-height: 1.55;
+
+  /* 17px — lead paragraph */
+  --text-lead: 1.0625rem;
+  --text-lead--letter-spacing: -0.009em;
+  --text-lead--line-height: 1.5;
+
+  /* 22px — section titles */
+  --text-title: 1.375rem;
+  --text-title--letter-spacing: -0.014em;
+  --text-title--line-height: 1.3;
+
+  /* 26px — screen headlines */
+  --text-headline: 1.625rem;
+  --text-headline--letter-spacing: -0.018em;
+  --text-headline--line-height: 1.22;
+
+  /* 44px — the confidence ring's figure; tabular, so it wants tight tracking */
+  --text-numeral: 2.75rem;
+  --text-numeral--letter-spacing: -0.022em;
+  --text-numeral--line-height: 1;
+
+  /* 32px — subpage titles */
+  --text-display-sm: 2rem;
+  --text-display-sm--letter-spacing: -0.026em;
+  --text-display-sm--line-height: 1.1;
+
+  /* Hero. Scales with the viewport, so the tracking has to hold at both ends —
+     -0.03em is chosen for the large end, where loose tracking shows most. */
+  --text-display: clamp(2.25rem, 4.5vw, 3rem);
+  --text-display--letter-spacing: -0.03em;
+  --text-display--line-height: 1.08;
+}
+
+/* ─── Light — tuned for a projector in daylight ───────────────────────────
+   Two constraints drive every value here.
+
+   Glare: the page is the largest lit surface in the room, so it is warm paper
+   (#F4F1EC, 88% luminance) rather than #FFFFFF. Cards are white and sit *above*
+   it, which is the inverse of the old arrangement — depth now comes from the
+   card being lighter than its ground, so no heavy shadow is needed to sell it.
+
+   Contrast: projectors crush mid-tones and desaturate. The previous light mode
+   reused the dark theme's iOS system colours as *text* on white — systemGreen
+   at 1.92:1, systemOrange at 2.06:1 — which vanish under daylight. Every text
+   token below is verified at 4.5:1 or better against both the page and a card.
+   ------------------------------------------------------------------------- */
+:root {
+  color-scheme: light;
+  --background: #F4F1EC;
+  --foreground: #17161A;
+  --brand: #0A5FCF;
+  --brand-foreground: #FFFFFF;
+  --success: #0F7A38;
+  --success-foreground: #FFFFFF;
+  --success-muted: #E4F2E8;
+  --warning: #8A5200;
+  --warning-foreground: #FFFFFF;
+  --warning-muted: #F8EEDD;
+  --danger: #C0241A;
+  --danger-foreground: #FFFFFF;
+  --danger-muted: #F9E7E5;
+  --card: #FFFFFF;
+  --card-foreground: #17161A;
+  --elevated: #FFFFFF;
+  --elevated-foreground: #17161A;
+  --popover: #FFFFFF;
+  --popover-foreground: #17161A;
+  --primary: #17161A;
+  --primary-foreground: #FFFFFF;
+  /* Was #FFFFFF. --secondary is used as a recessed *fill* — the confidence
+     ring's track, the technical-details code blocks, the classification meter
+     tracks — all of which sit on a white card, so a white fill made them
+     invisible. Set two steps below the card rather than one: at 1.19:1 against
+     white the track was technically present and practically gone once a
+     projector crushed the mid-tones, which for the risk ring means the arc has
+     nothing to be read against. 1.33:1 survives the room, and text laid over it
+     still clears 12:1. */
+  --secondary: #E7E0D5;
+  --secondary-foreground: #17161A;
+  --muted: #EDE9E2;
+  --muted-foreground: #55525C;
+  --accent: #EDE9E2;
+  --accent-foreground: #17161A;
+  --destructive: #C0241A;
+  --border: rgba(23, 22, 26, 0.10);
+  --input: rgba(23, 22, 26, 0.06);
+  --ring: #0A5FCF;
+  --chart-1: #0A5FCF;
+  --chart-2: #0F7A38;
+  --chart-3: #8A5200;
+  --chart-4: #C0241A;
+  --chart-5: #7A3BAF;
+  --radius: 1.25rem;
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #17161A;
+  --sidebar-primary: #0A5FCF;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #EDE9E2;
+  --sidebar-accent-foreground: #17161A;
+  --sidebar-border: rgba(23, 22, 26, 0.10);
+  --sidebar-ring: #0A5FCF;
+}
+
+/* ─── App surfaces ───────────────────────────────────────────────────────────
+   The components used to hard-code these hexes, which is why toggling the theme
+   changed the variables above but left every panel dark. The dark values below
+   are those exact hexes, so dark mode is unchanged; only light gains real ones.
+
+   --orange-ink exists separately from --orange because the brand orange works
+   as a fill in both themes but fails as *text* on a light background (#E87040
+   on #F5F5F7 is about 2.9:1, under the 4.5:1 needed to read comfortably). Fills
+   keep the brand colour; text darkens to reach ~5.4:1.
+   ------------------------------------------------------------------------- */
+:root {
+  --surface-page: #F4F1EC;
+  --surface-card: #FFFFFF;
+  --surface-inset: #F8F5F0;
+  --surface-raised: #FFFFFF;
+  --surface-popover: #FFFFFF;
+  --hairline: rgba(23, 22, 26, 0.10);
+  --hairline-strong: rgba(23, 22, 26, 0.20);
+  --heading: #17161A;
+  --nav: rgba(244, 241, 236, 0.86);
+  /* The brand orange stays a fill; as text it only reaches 3.08:1 on white, so
+     --orange-ink carries every glyph and is deepened for projection. */
+  --orange: #E87040;
+  --orange-ink: #A8410F;
+
+  /* ── Ambient layer ──────────────────────────────────────────────────────
+     The drifting background is built from these, so its intensity is a theme
+     decision rather than a value buried in a component. Light is deliberately
+     an order of magnitude fainter than dark: the same alpha that reads as a
+     glow on #1E1E1E reads as a stain on warm paper, and under a projector it
+     would bloom into the text. Everything here stays under the threshold where
+     body copy loses contrast against it. */
+  --amb-warm: rgba(232, 112, 64, 0.26);
+  --amb-cool: rgba(10, 95, 207, 0.17);
+  --amb-gold: rgba(214, 158, 62, 0.26);
+  --amb-mesh: rgba(23, 22, 26, 0.10);
+  --amb-digit: rgba(23, 22, 26, 0.11);
+  /* Specular highlight that tracks the pointer across a card — the material
+     catching the room light. White on white would be invisible, so in light
+     mode the sheen is a *warm tint*, not a brightening. */
+  --sheen: rgba(232, 112, 64, 0.17);
+  --sheen-edge: rgba(255, 255, 255, 0.9);
+}
+
+.dark {
+  --surface-page: #20201f;
+  --surface-card: #181817;
+  --surface-inset: #1A1A1A;
+  --surface-raised: #252525;
+  --surface-popover: #1c1c1b;
+  --hairline: #27272a;
+  --hairline-strong: #3f3f46;
+  --heading: #FFFFFF;
+  --nav: rgba(32, 32, 31, 0.92);
+  --orange: #E87040;
+  --orange-ink: #E87040;
+  --amb-warm: rgba(232, 112, 64, 0.16);
+  --amb-cool: rgba(10, 132, 255, 0.12);
+  --amb-gold: rgba(214, 158, 62, 0.10);
+  --amb-mesh: rgba(255, 255, 255, 0.045);
+  --amb-digit: rgba(255, 255, 255, 0.05);
+  --sheen: rgba(255, 255, 255, 0.07);
+  --sheen-edge: rgba(255, 255, 255, 0.14);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    --surface-page: #20201f;
+    --surface-card: #181817;
+    --surface-inset: #1A1A1A;
+    --surface-raised: #252525;
+    --surface-popover: #1c1c1b;
+    --hairline: #27272a;
+    --hairline-strong: #3f3f46;
+    --heading: #FFFFFF;
+    --nav: rgba(32, 32, 31, 0.92);
+    --orange: #E87040;
+    --orange-ink: #E87040;
+    --amb-warm: rgba(232, 112, 64, 0.16);
+    --amb-cool: rgba(10, 132, 255, 0.12);
+    --amb-gold: rgba(214, 158, 62, 0.10);
+    --amb-mesh: rgba(255, 255, 255, 0.045);
+    --amb-digit: rgba(255, 255, 255, 0.05);
+    --sheen: rgba(255, 255, 255, 0.07);
+    --sheen-edge: rgba(255, 255, 255, 0.14);
+  }
+}
+
+/* ─── Dark (Claude-style grey) ─── */
+.dark {
+  color-scheme: dark;
+  --background: #1E1E1E;
+  --foreground: #F5F5F7;
+  --brand: #0A84FF;
+  --brand-foreground: #FFFFFF;
+  --success: #32D74B;
+  --success-foreground: #000000;
+  --success-muted: rgba(50, 215, 75, 0.12);
+  --warning: #FF9F0A;
+  --warning-foreground: #000000;
+  --warning-muted: rgba(255, 159, 10, 0.12);
+  --danger: #FF453A;
+  --danger-foreground: #FFFFFF;
+  --danger-muted: rgba(255, 69, 58, 0.12);
+  --card: #2A2A2A;
+  --card-foreground: #F5F5F7;
+  --elevated: #333333;
+  --elevated-foreground: #F5F5F7;
+  --popover: #2A2A2A;
+  --popover-foreground: #F5F5F7;
+  --primary: #F5F5F7;
+  --primary-foreground: #000000;
+  --secondary: #222222;
+  --secondary-foreground: #F5F5F7;
+  --muted: #222222;
+  --muted-foreground: #A0A0A0;
+  --accent: #222222;
+  --accent-foreground: #F5F5F7;
+  --destructive: #FF453A;
+  --border: rgba(255, 255, 255, 0.08);
+  --input: rgba(255, 255, 255, 0.06);
+  --ring: #0A84FF;
+  --chart-1: #0A84FF;
+  --chart-2: #32D74B;
+  --chart-3: #FF9F0A;
+  --chart-4: #FF453A;
+  --chart-5: #BF5AF2;
+  --sidebar: #2A2A2A;
+  --sidebar-foreground: #F5F5F7;
+  --sidebar-primary: #E87040;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #333333;
+  --sidebar-accent-foreground: #F5F5F7;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-ring: #E87040;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    color-scheme: dark;
+    --background: #1E1E1E;
+    --foreground: #F5F5F7;
+    --brand: #0A84FF;
+    --brand-foreground: #FFFFFF;
+    --success: #32D74B;
+    --success-foreground: #000000;
+    --success-muted: rgba(50, 215, 75, 0.12);
+    --warning: #FF9F0A;
+    --warning-foreground: #000000;
+    --warning-muted: rgba(255, 159, 10, 0.12);
+    --danger: #FF453A;
+    --danger-foreground: #FFFFFF;
+    --danger-muted: rgba(255, 69, 58, 0.12);
+    --card: #1C1C1E;
+    --card-foreground: #F5F5F7;
+    --elevated: #2C2C2E;
+    --elevated-foreground: #F5F5F7;
+    --popover: #1C1C1E;
+    --popover-foreground: #F5F5F7;
+    --primary: #F5F5F7;
+    --primary-foreground: #000000;
+    --secondary: #1C1C1E;
+    --secondary-foreground: #F5F5F7;
+    --muted: #1C1C1E;
+    --muted-foreground: #86868B;
+    --accent: #1C1C1E;
+    --accent-foreground: #F5F5F7;
+    --destructive: #FF453A;
+    --border: rgba(255, 255, 255, 0.10);
+    --input: rgba(255, 255, 255, 0.08);
+    --ring: #0A84FF;
+    --chart-1: #0A84FF;
+    --chart-2: #32D74B;
+    --chart-3: #FF9F0A;
+    --chart-4: #FF453A;
+    --chart-5: #BF5AF2;
+    --sidebar: #1C1C1E;
+    --sidebar-foreground: #F5F5F7;
+    --sidebar-primary: #0A84FF;
+    --sidebar-primary-foreground: #FFFFFF;
+    --sidebar-accent: #2C2C2E;
+    --sidebar-accent-foreground: #F5F5F7;
+    --sidebar-border: rgba(255, 255, 255, 0.10);
+    --sidebar-ring: #0A84FF;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-optical-sizing: auto;
+    /* Matches the header's 400ms so the theme swap reads as one change rather
+       than the bar trailing the page. */
+    transition: background-color 400ms var(--ease-standard),
+                color 400ms var(--ease-standard);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    body { transition: none; }
+  }
+
+  /* Global custom scrollbar — thin, rounded, accent-colored thumb instead of
+     the native OS scrollbar, everywhere content scrolls vertically (page
+     scroll included), so nothing falls back to the default ugly bar.
+     `.no-scrollbar` (used by HorizontalScrollArea) still overrides this. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--orange) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  *::-webkit-scrollbar-thumb {
+    background-color: var(--orange);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in oklch, var(--orange), black 8%);
+  }
+}
+
+@layer utilities {
+  /* Hides the native scrollbar so a custom indicator can replace it. */
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Glass panel for main containers */
+  .glass-panel {
+    /* Secondary text sits on a surface the background shows through, so the
+       flat token loses contrast the solid surfaces do not. */
+    --muted-foreground: #B6B6BB;
+    background: rgba(26, 26, 26, 0.72);
+    -webkit-backdrop-filter: blur(28px) saturate(160%);
+    backdrop-filter: blur(28px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.3),
+      0 4px 12px rgba(0, 0, 0, 0.25),
+      0 8px 24px -4px rgba(0, 0, 0, 0.2);
+  }
+  /* Light glass sits above a warm page, so it is white with a bright top edge —
+     the material catches the light rather than reading as a grey slab. The
+     shadow is warm-tinted: a neutral black shadow over warm paper greys it. */
+  .light .glass-panel,
+  :root:not(.dark):not(.light) .glass-panel {
+    --muted-foreground: #4A4750;
+    background: rgba(255, 255, 255, 0.86);
+    -webkit-backdrop-filter: blur(28px) saturate(150%);
+    backdrop-filter: blur(28px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.95);
+    box-shadow:
+      0 1px 2px rgba(62, 48, 34, 0.05),
+      0 8px 20px -6px rgba(62, 48, 34, 0.09),
+      0 24px 48px -18px rgba(62, 48, 34, 0.10);
+  }
+
+  /* Recessed input field */
+  .input-recessed {
+    box-shadow:
+      inset 0 2px 4px -1px rgba(0, 0, 0, 0.5),
+      inset 0 1px 2px -1px rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    transition: border-color 180ms var(--ease-standard),
+                box-shadow 180ms var(--ease-standard);
+  }
+  .input-recessed:focus-within {
+    border-color: rgba(232, 112, 64, 0.5);
+    box-shadow:
+      inset 0 2px 4px -1px rgba(0, 0, 0, 0.4),
+      inset 0 1px 2px -1px rgba(0, 0, 0, 0.3),
+      0 0 0 3px rgba(232, 112, 64, 0.15);
+  }
+  .light .input-recessed {
+    box-shadow:
+      inset 0 2px 5px -2px rgba(62, 48, 34, 0.16),
+      inset 0 1px 2px -1px rgba(62, 48, 34, 0.10);
+    background: var(--surface-inset);
+    border: 1px solid rgba(23, 22, 26, 0.10);
+  }
+  .light .input-recessed:focus-within {
+    border-color: rgba(232, 112, 64, 0.4);
+    box-shadow:
+      inset 0 2px 4px -1px rgba(0, 0, 0, 0.08),
+      inset 0 1px 2px -1px rgba(0, 0, 0, 0.06),
+      0 0 0 3px rgba(232, 112, 64, 0.1);
+  }
+
+  /* Tactile card with multi-layer shadow */
+  .tactile-card {
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.2),
+      0 4px 12px rgba(0, 0, 0, 0.15),
+      0 8px 24px -4px rgba(0, 0, 0, 0.1);
+    transition: transform 220ms var(--ease-rise),
+                box-shadow 220ms var(--ease-rise),
+                border-color 220ms var(--ease-rise),
+                background-color 220ms var(--ease-rise);
+  }
+  .tactile-card:hover {
+    transform: translateY(-4px);
+    box-shadow:
+      0 2px 4px rgba(0, 0, 0, 0.2),
+      0 8px 24px rgba(0, 0, 0, 0.2),
+      0 16px 48px -8px rgba(0, 0, 0, 0.15);
+    border-color: rgba(232, 112, 64, 0.3);
+  }
+  .light .tactile-card {
+    box-shadow:
+      0 1px 2px rgba(62, 48, 34, 0.05),
+      0 4px 12px -2px rgba(62, 48, 34, 0.08);
+  }
+  .light .tactile-card:hover {
+    transform: translateY(-4px);
+    box-shadow:
+      0 2px 4px rgba(62, 48, 34, 0.06),
+      0 12px 28px -6px rgba(62, 48, 34, 0.13);
+  }
+
+  /* Processing screen — bars breathe at staggered offsets so the group reads as
+     one settling distribution rather than five independent loaders. */
+  .processing-bar {
+    animation: processing-bar-pulse 1.5s var(--ease-sweep) infinite;
+    transform-origin: bottom;
+  }
+  @keyframes processing-bar-pulse {
+    0%, 100% { transform: scaleY(0.72); }
+    50%      { transform: scaleY(1); }
+  }
+
+  /* Each narration line rises as it fades in. Keyed on the line index in the
+     component, so React remounts the node and replays this per line. */
+  /* Explains why scanning is unavailable; appears on tap, so it slides in from
+     under the control that was pressed rather than snapping into place. */
+  .scan-notice {
+    animation: scan-notice-in 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  @keyframes scan-notice-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .scan-notice { animation: none; }
+  }
+
+  /* The vision verdict lands mid-run, so it scales up as it appears rather than
+     popping in at full size next to already-settled content. */
+  .processing-verdict {
+    animation: processing-verdict-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  @keyframes processing-verdict-in {
+    from { opacity: 0; transform: translateY(4px) scale(0.94); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  /* Shown when the narration has run out but the backend has not answered:
+     signals "still working" without claiming a percentage we do not know. */
+  .progress-indeterminate {
+    animation: progress-breathe 1.6s ease-in-out infinite;
+  }
+  @keyframes progress-breathe {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.35; }
+  }
+
+  /* Motion here is decorative: reducing it costs the user nothing. */
+  @media (prefers-reduced-motion: reduce) {
+    .processing-bar {
+      animation: none;
+      transform: scaleY(1);
+    }
+    .processing-verdict {
+      animation: none;
+    }
+    .progress-indeterminate {
+      animation: none;
+      opacity: 1;
+    }
+  }
+
+  /* ─── Motion system ────────────────────────────────────────────────────────
+     One entrance gesture, reused everywhere, so arrivals feel like one app
+     rather than a set of unrelated effects.
+
+     Only transform and opacity are animated. Both are handled by the compositor
+     without layout or paint, which matters here because several panels carry a
+     backdrop-filter: anything that forced a repaint would make the browser
+     re-sample everything behind them on every frame.
+     --------------------------------------------------------------------- */
+  @keyframes rise-in {
+    from { opacity: 0; transform: translate3d(0, 14px, 0); }
+    to   { opacity: 1; transform: translate3d(0, 0, 0); }
+  }
+
+  .rise {
+    /* `both` matters: backwards fill holds the element invisible through its
+       delay, so a staggered child does not flash in place and then animate. */
+    animation: rise-in var(--dur-rise) var(--ease-rise) both;
+    animation-delay: var(--rise-delay, 0ms);
+  }
+
+  /* Stagger steps. Roughly one frame apart at 60fps times four, which reads as
+     a cascade without the last element feeling late. */
+  .rise-1 { --rise-delay: 35ms; }
+  .rise-2 { --rise-delay: 70ms; }
+  .rise-3 { --rise-delay: 105ms; }
+  .rise-4 { --rise-delay: 140ms; }
+  .rise-5 { --rise-delay: 175ms; }
+  .rise-6 { --rise-delay: 210ms; }
+  .rise-7 { --rise-delay: 245ms; }
+  .rise-8 { --rise-delay: 280ms; }
+
+  /* The exit half of .rise. Same axis, mirrored curve, and shorter — a
+     dismissal that decelerates on the way out reads as reluctant. Applied to
+     <main> rather than to a wrapper, because InputView renders a fragment of
+     two columns that have to stay direct flex children of it. */
+  @keyframes stage-out {
+    from { opacity: 1; transform: translate3d(0, 0, 0); }
+    to   { opacity: 0; transform: translate3d(0, 8px, 0); }
+  }
+  .stage-leaving {
+    animation: stage-out var(--dur-exit) var(--ease-exit) both;
+    /* The view is being replaced; clicks on it during the exit would act on
+       state the app has already moved past. */
+    pointer-events: none;
+  }
+
+  @keyframes stage-out-fade {
+    from { opacity: 1; }
+    to   { opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .stage-leaving { animation-name: stage-out-fade; }
+  }
+
+  /* A softer variant for content revealed in place (an accordion body), where a
+     full 14px travel would push the surrounding layout around. */
+  @keyframes unfold-in {
+    from { opacity: 0; transform: translate3d(0, -6px, 0); }
+    to   { opacity: 1; transform: translate3d(0, 0, 0); }
+  }
+  .unfold {
+    animation: unfold-in 320ms var(--ease-rise) both;
+  }
+
+  /* Loading bar: a highlight travelling over the filled portion. The processing
+     panel is panel-raised rather than glass-panel, so nothing here sits over a
+     backdrop-filter and this can run continuously without cost elsewhere. */
+  @keyframes bar-sweep {
+    from { transform: translate3d(-140%, 0, 0); }
+    to   { transform: translate3d(340%, 0, 0); }
+  }
+  .bar-sweep::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    width: 40%;
+    border-radius: inherit;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.55),
+      transparent
+    );
+    animation: bar-sweep 1.9s var(--ease-sweep) infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rise,
+    .unfold {
+      animation: none;
+    }
+    .bar-sweep::after {
+      animation: none;
+      opacity: 0;
+    }
+  }
+
+  /* Raised panel — same shadow language as .tactile-card, minus the hover
+     lift, for static containers rather than interactive cards. */
+  .panel-raised {
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.2),
+      0 4px 12px rgba(0, 0, 0, 0.15),
+      0 8px 24px -4px rgba(0, 0, 0, 0.1);
+  }
+  .light .panel-raised {
+    box-shadow:
+      0 1px 2px rgba(62, 48, 34, 0.05),
+      0 8px 20px -6px rgba(62, 48, 34, 0.09),
+      0 24px 48px -18px rgba(62, 48, 34, 0.10);
+  }
+
+
+  /* Orange gradient button — Claude-style */
+  .btn-gradient {
+    background: linear-gradient(135deg, #E87040 0%, #D97757 50%, #C46040 100%);
+    box-shadow:
+      0 1px 2px rgba(232, 112, 64, 0.3),
+      0 4px 16px -2px rgba(232, 112, 64, 0.35),
+      0 8px 32px -4px rgba(217, 119, 87, 0.2);
+    /* Identity filter, declared up front: toggling filter between `none` and a
+       value builds and tears down a rendering surface on every press, and on an
+       element with three layered glow shadows that reads as a flash. */
+    filter: brightness(1) saturate(1);
+    /* No transform here. The Button component composes its own via Tailwind's
+       --tw-translate-y/--tw-scale; declaring it in both places put two
+       transitions on one property and made the press jump. */
+    transition: box-shadow 220ms var(--ease-standard),
+                filter 220ms var(--ease-standard);
+  }
+  .btn-gradient:hover {
+    filter: brightness(1.06) saturate(1.03);
+    box-shadow:
+      0 1px 2px rgba(232, 112, 64, 0.3),
+      0 6px 24px -2px rgba(232, 112, 64, 0.45),
+      0 12px 48px -4px rgba(217, 119, 87, 0.3);
+  }
+  .btn-gradient:active {
+    box-shadow:
+      0 1px 2px rgba(232, 112, 64, 0.2),
+      0 2px 8px -1px rgba(232, 112, 64, 0.25);
+  }
+  .light .btn-gradient {
+    box-shadow:
+      0 1px 2px rgba(232, 112, 64, 0.2),
+      0 4px 16px -2px rgba(232, 112, 64, 0.25);
+  }
+  .light .btn-gradient:hover {
+    box-shadow:
+      0 2px 4px rgba(232, 112, 64, 0.25),
+      0 8px 24px -2px rgba(232, 112, 64, 0.3);
+  }
+
+  /* Dark grey glassmorphism for the fixed nav */
+  .nav-glass {
+    background: rgba(26, 26, 26, 0.72);
+    -webkit-backdrop-filter: saturate(180%) blur(24px);
+    backdrop-filter: saturate(180%) blur(24px);
+    border-bottom: 0.5px solid rgba(255, 255, 255, 0.04);
+  }
+  .light .nav-glass,
+  :root:not(.dark):not(.light) .nav-glass {
+    background: rgba(244, 241, 236, 0.80);
+    border-bottom: 0.5px solid rgba(23, 22, 26, 0.08);
+  }
+
+  /* ─── Accessibility fallbacks ──────────────────────────────────────────────
+     The reduced-motion blocks above cover the entrance animations but not the
+     hover lifts, which are the largest movement on the page. Translucency gets
+     its own signal, independent of motion (§14).
+     --------------------------------------------------------------------- */
+  @media (prefers-reduced-motion: reduce) {
+    .tactile-card,
+    .tactile-card:hover,
+    .btn-gradient,
+    .btn-gradient:hover,
+    .btn-gradient:active {
+      transition: box-shadow 220ms var(--ease-standard);
+    }
+  }
+
+  /* ─── Ambient layer ────────────────────────────────────────────────────────
+     A fixed field behind every screen: three slow warm/cool auroras, a mesh of
+     dots, a scatter of Benford digits, and a film of grain.
+
+     Three constraints shaped it, and they are what keep it from reading as
+     decoration:
+
+     1. It must not fight the text. Every layer is defined in --amb-* tokens
+        (see the light block above) at alphas chosen so body copy over the
+        brightest point of the aurora still clears 4.5:1. Under a projector,
+        which crushes mid-tones and blooms bright areas, anything stronger
+        would smear into the type.
+     2. It must not strobe or oscillate. Cycles run 38-96s — roughly 0.02Hz,
+        two orders of magnitude below the ~0.2Hz band that reads as a pulse and
+        triggers vestibular discomfort. Nothing here loops fast enough to be
+        noticed as a loop.
+     3. It must be free. Only transform and opacity animate, so the compositor
+        handles every frame without layout or paint. That matters more than
+        usual here: several panels above this layer carry a backdrop-filter,
+        and a repaint underneath would force the browser to re-sample all of
+        them on every frame.
+
+     The grain is not texture for its own sake. Three overlapping 60vw radial
+     gradients at low alpha band visibly on an 8-bit projector; a film of noise
+     over the top dithers the steps away.
+     ------------------------------------------------------------------------ */
+  .ambient {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+    /* Its own stacking context, so nothing here can interleave with app
+       content, and the compositor can keep the whole field on one layer. */
+    isolation: isolate;
+    /* Not `strict`: size containment would make the layer resolve its own
+       height from content it deliberately has none of. */
+    contain: layout paint style;
+  }
+
+  .ambient-blob {
+    position: absolute;
+    border-radius: 50%;
+    /* The blur is what turns three hard circles into weather. Applied via
+       filter rather than a soft-stop gradient so the falloff is gaussian —
+       a gradient's linear ramp reads as a visible ring at this size. */
+    filter: blur(72px);
+    will-change: transform;
+  }
+
+  .ambient-blob-a {
+    top: -14vh;
+    left: -10vw;
+    width: 58vw;
+    height: 58vw;
+    background: radial-gradient(circle at 50% 50%, var(--amb-warm), transparent 68%);
+    animation: amb-drift-a 52s var(--ease-sweep) infinite alternate;
+  }
+
+  .ambient-blob-b {
+    top: 18vh;
+    right: -18vw;
+    width: 62vw;
+    height: 62vw;
+    background: radial-gradient(circle at 50% 50%, var(--amb-cool), transparent 68%);
+    animation: amb-drift-b 67s var(--ease-sweep) infinite alternate;
+  }
+
+  .ambient-blob-c {
+    bottom: -26vh;
+    left: 26vw;
+    width: 52vw;
+    height: 52vw;
+    background: radial-gradient(circle at 50% 50%, var(--amb-gold), transparent 70%);
+    animation: amb-drift-c 83s var(--ease-sweep) infinite alternate;
+  }
+
+  @keyframes amb-drift-a {
+    from { transform: translate3d(0, 0, 0) scale(1); }
+    to   { transform: translate3d(9vw, 7vh, 0) scale(1.14); }
+  }
+  @keyframes amb-drift-b {
+    from { transform: translate3d(0, 0, 0) scale(1.08); }
+    to   { transform: translate3d(-11vw, 9vh, 0) scale(0.94); }
+  }
+  @keyframes amb-drift-c {
+    from { transform: translate3d(0, 0, 0) scale(0.96); }
+    to   { transform: translate3d(7vw, -8vh, 0) scale(1.12); }
+  }
+
+  /* Dot mesh. Static on purpose — a moving grid is the one thing in this layer
+     the eye *would* lock onto. It reads as graph paper: the surface the
+     analysis is plotted on. Masked to a soft ellipse so it never reaches the
+     edges of the viewport, where a hard grid boundary would look like a bug. */
+  .ambient-mesh {
+    position: absolute;
+    inset: -10%;
+    background-image: radial-gradient(var(--amb-mesh) 1px, transparent 1px);
+    background-size: 26px 26px;
+    -webkit-mask-image: radial-gradient(ellipse 78% 62% at 50% 42%, #000 20%, transparent 78%);
+    mask-image: radial-gradient(ellipse 78% 62% at 50% 42%, #000 20%, transparent 78%);
+  }
+
+  /* Benford digits, drifting. The subject matter of the app used as its
+     wallpaper: 1s outnumber 2s outnumber 3s, exactly as the law predicts, so
+     even the background is making the argument. Positioned inline by the
+     component; everything about how they move lives here. */
+  .ambient-digit {
+    position: absolute;
+    font-family: var(--font-mono);
+    font-weight: 600;
+    color: var(--amb-digit);
+    line-height: 1;
+    user-select: none;
+    will-change: transform, opacity;
+    animation: amb-float var(--amb-dur, 64s) linear var(--amb-delay, 0s) infinite;
+  }
+
+  /* Rises the full height of the viewport once, swaying as it goes, and is
+     invisible at both ends — so a digit is never seen to appear or vanish, and
+     the loop has no seam. */
+  @keyframes amb-float {
+    0%   { transform: translate3d(0, 12vh, 0) rotate(-4deg); opacity: 0; }
+    12%  { opacity: 1; }
+    50%  { transform: translate3d(3vw, -44vh, 0) rotate(3deg); }
+    88%  { opacity: 1; }
+    100% { transform: translate3d(-1vw, -100vh, 0) rotate(-2deg); opacity: 0; }
+  }
+
+  /* Dithers the gradient banding described above. Fixed rather than absolute so
+     it does not tile-shift against the blobs as they travel. */
+  .ambient-grain {
+    position: absolute;
+    inset: 0;
+    opacity: 0.22;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.30'/%3E%3C/svg%3E");
+  }
+  .dark .ambient-grain {
+    opacity: 0.3;
+    mix-blend-mode: screen;
+  }
+
+  /* Reduced motion keeps the field — it is depth, not information — and simply
+     stops it moving. The digits go with it: a drifting glyph is the most
+     literal "moving object" on the page and the least defensible to keep. */
+  @media (prefers-reduced-motion: reduce) {
+    .ambient-blob { animation: none; }
+    .ambient-digit { display: none; }
+  }
+
+  /* ─── Mobile ambient ───────────────────────────────────────────────────────
+     The drifting digits are removed below 640px, and that is a layout decision
+     rather than a taste one.
+
+     Each glyph is sized in fixed pixels (20–64px) but positioned as a
+     percentage of the viewport. On a wide screen that scatters them across a
+     canvas whose text occupies a 448px column in the middle — they never touch
+     copy. Narrow the viewport to 390px and the viewport *is* the column: the
+     same percentages now place a 64px numeral directly on top of the body
+     paragraph, at an alpha tuned to be legible. Texture became clutter.
+
+     Rescaling them was tried and does not survive the maths: to clear a
+     ~350px-wide text column on a 390px screen there is nowhere left to put a
+     glyph. The auroras and the mesh stay — they sit behind everything without
+     competing, because they have no edges for the eye to catch on.
+
+     The mesh is also thinned. At 0.10 its dots read through body text at this
+     size, which is the same problem one order of magnitude quieter.
+     ------------------------------------------------------------------------ */
+  @media (width < 40rem) {
+    .ambient-digit { display: none; }
+    .ambient { --amb-mesh: rgba(23, 22, 26, 0.055); }
+    .dark .ambient { --amb-mesh: rgba(255, 255, 255, 0.03); }
+    /* Softer, larger, fewer edges — atmosphere rather than objects. */
+    .ambient-blob { filter: blur(56px); }
+    .ambient-grain { opacity: 0.14; }
+  }
+
+  /* ─── Mobile shell: Material 3 Expressive ──────────────────────────────────
+     What made this read as a resized desktop page was never the sizes. It was
+     three structural habits that only make sense with a mouse:
+
+       1. The primary action sat mid-page, reachable by a cursor that can go
+          anywhere and awkward for a thumb that cannot.
+       2. A styled scrollbar ran down the right edge. Desktop chrome; every
+          mobile OS overlays its own and hides it when idle.
+       3. Surfaces were bordered rectangles floating on a page, rather than the
+          large soft containers a touch UI is built from.
+
+     M3 Expressive answers all three: an action bar pinned to the thumb zone,
+     large corner radii, and shape that responds to touch.
+     ------------------------------------------------------------------------ */
+  @media (width < 40rem) {
+    /* 1. No desktop scrollbar. iOS and Android draw their own overlay bar and
+       fade it out; a persistent 10px orange rail is a dead giveaway. */
+    *,
+    *::-webkit-scrollbar {
+      scrollbar-width: none;
+    }
+    *::-webkit-scrollbar {
+      width: 0;
+      height: 0;
+      display: none;
+    }
+
+    /* 2. The action bar. Pinned to the bottom because that is where a thumb
+       rests, translucent because content has to be seen passing beneath it —
+       and here the blur is real: there is a scrolling page behind it, unlike
+       the buttons sitting on an opaque card. */
+    .action-bar {
+      position: fixed;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      /* Above <main> (z-10) and the header (z-40), so content scrolling under
+         the bar can never paint over it. Stays below the brand sheet (z-60). */
+      z-index: 50;
+      padding: 0.75rem max(1rem, env(safe-area-inset-left))
+        max(0.75rem, env(safe-area-inset-bottom))
+        max(1rem, env(safe-area-inset-right));
+      /* Nearly opaque: at 22% transparency the scrolling page showed straight
+         through the wash and body text stayed legible behind the button. The
+         10% left over keeps the backdrop blur real without letting type read
+         through the bar. */
+      background: color-mix(in oklch, var(--surface-page), transparent 10%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      backdrop-filter: blur(24px) saturate(180%);
+      border-top: 1px solid var(--hairline);
+      /* The hairline plus a soft upward cast separates the bar from whatever
+         is passing beneath it even where the blur cannot be reached. */
+      box-shadow:
+        0 -0.5px 0 var(--hairline-strong),
+        0 -12px 32px -18px rgba(62, 48, 34, 0.20);
+    }
+    @media (prefers-reduced-transparency: reduce) {
+      .action-bar {
+        background: var(--surface-page);
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+      }
+    }
+
+    /* 3. Shape that responds. M3 Expressive's signature: the control morphs
+       from a pill toward a squircle while held, so the press is legible in the
+       silhouette and not only in the fill. Paired with the state layer in
+       .m3-press, which supplies the colour half of the same gesture. */
+    .m3x-morph {
+      border-radius: 9999px;
+      transition:
+        border-radius 260ms var(--spring-pop),
+        transform 160ms var(--ease-standard),
+        box-shadow 200ms var(--ease-standard);
+    }
+    .m3x-morph[data-pressed='true'] {
+      border-radius: 1.25rem;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .m3x-morph,
+      .m3x-morph[data-pressed='true'] {
+        transition: none;
+        border-radius: 9999px;
+      }
+    }
+
+    /* Expressive containers: large radii, no hard borders. A 28px corner on a
+       full-width surface reads as a touch object; an 8px corner reads as a
+       desktop panel that happens to be narrow. */
+    .m3x-container {
+      border-radius: 1.75rem;
+      border-color: transparent;
+    }
+  }
+
+  /* ─── Mobile controls: Material 3 state layers + Apple specular edges ──────
+     Two systems, each used for what it is actually good at.
+
+     Material 3 supplies the *behaviour*: a state layer — a translucent wash of
+     the control's own foreground colour — laid over the surface on press,
+     rather than a second background colour swapped in. Because it is
+     currentColor at a fixed alpha it works on any button variant without a
+     per-variant press colour, and it composites instead of repainting.
+
+     Apple supplies the *material*: a bright inner rim along the top edge and a
+     soft inner shadow at the bottom, so the control reads as a lit physical
+     object rather than a coloured rectangle.
+
+     Honest limitation on "liquid glass": real glass refracts what is behind it,
+     and these buttons sit on an opaque white card, so a backdrop-filter here
+     would blur a flat colour and show nothing. What is simulated is the
+     material — specular rim, inner shadow, tint — not the refraction. The blur
+     is used where there is genuinely something behind it: the nav bar and the
+     brand panel.
+     ------------------------------------------------------------------------ */
+  @media (width < 40rem) {
+    /* The state layer. Originates at the touch point, which is the Material 3
+       ripple's premise without the keyframe bookkeeping a real ripple needs —
+       and unlike a ripple it is interruptible, because it is a transition on
+       one property rather than an animation with a lifecycle. */
+    .m3-press {
+      position: relative;
+      overflow: hidden;
+      isolation: isolate;
+      transition: transform 160ms var(--ease-standard);
+    }
+    .m3-press::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      border-radius: inherit;
+      pointer-events: none;
+      background: radial-gradient(
+        circle at var(--mx, 50%) var(--my, 50%),
+        currentColor 0%,
+        transparent 62%
+      );
+      opacity: 0;
+      transition: opacity 300ms var(--ease-standard);
+    }
+    /* In fast, out slow: feedback must feel instant, while the fade reads as
+       the control settling rather than the light being switched off (§1). */
+    .m3-press[data-pressed='true']::after {
+      opacity: 0.16;
+      transition: opacity 80ms var(--ease-rise);
+    }
+    .m3-press[data-pressed='true'] {
+      transform: scale(0.978);
+    }
+
+    /* The primary action. A pill, because at 56px tall a pill is unambiguous
+       about being tappable in a way a rounded rectangle is not. */
+    .btn-liquid {
+      border-radius: 9999px;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.5),
+        inset 0 -1px 2px rgba(120, 48, 12, 0.22),
+        0 1px 2px rgba(232, 112, 64, 0.22),
+        0 8px 22px -6px rgba(232, 112, 64, 0.42);
+    }
+    .btn-liquid[data-pressed='true'],
+    .btn-liquid.m3-press:active {
+      /* Hold-to-expand. While the finger is down the primary button grows 2%
+         and the radius follows (the .m3x-morph half), then it returns to size
+         only on release — the silhouette confirms the press instead of
+         shrinking away from it.
+
+         The base Button utility answers :active with scale(.97) plus a 1px dip,
+         and every rule in this file lives inside the Utility layer, so those
+         generated utilities can out-specific the JS side ([data-pressed] is
+         only (0,2,0) against their (0,3,0)). Important cuts through all of it:
+         the held state is a pure expansion, nothing composing underneath it. */
+      transform: scale(1.02) !important;
+      scale: 1 !important;
+      translate: 0 !important;
+    }
+    .btn-liquid[data-pressed='true'] {
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.35),
+        inset 0 2px 6px rgba(120, 48, 12, 0.28),
+        0 1px 2px rgba(232, 112, 64, 0.18);
+    }
+    /* A disabled primary is not broken, it is *not yet* — so it keeps its
+       shape and loses only its light, rather than going flat grey. */
+    .btn-liquid:disabled {
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+      filter: saturate(0.55);
+    }
+
+    /* Tonal container for the upload target: a tinted surface with a lit top
+       edge, which is the same material language one step quieter. */
+    .surface-tonal {
+      background: color-mix(in oklch, var(--orange), transparent 94%);
+      border-color: color-mix(in oklch, var(--orange), transparent 78%);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.7),
+        0 1px 2px rgba(62, 48, 34, 0.05);
+    }
+    .dark .surface-tonal {
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .m3-press,
+      .m3-press[data-pressed='true'] { transform: none; transition: none; }
+      .btn-liquid[data-pressed='true'],
+      .btn-liquid.m3-press:active {
+        transform: none !important;
+        scale: 1 !important;
+        translate: 0 !important;
+        transition: none;
+      }
+    }
+  }
+
+  /* ─── Safe areas ───────────────────────────────────────────────────────────
+     iOS puts a floating URL bar over the bottom of the viewport and a notch or
+     dynamic island over the top. env() insets are 0 everywhere that has no such
+     hardware, so these are inert on desktop and on Android without gestures.
+     ------------------------------------------------------------------------ */
+  @media (width < 40rem) {
+    .safe-b { padding-bottom: max(1.25rem, env(safe-area-inset-bottom)); }
+
+    /* The input card is the whole point of this screen on a phone, and it read
+       as a flat panel sharing the page's own surface. A deeper, warmer shadow
+       and a brighter top edge lift it off the paper — the same material
+       language as .sheen-surface, turned up because at this size the card is
+       the interface rather than one element within it. */
+    .card-mobile {
+      box-shadow:
+        0 1px 2px rgba(62, 48, 34, 0.06),
+        0 6px 16px -4px rgba(62, 48, 34, 0.10),
+        0 20px 40px -12px rgba(62, 48, 34, 0.16);
+      border-color: rgba(255, 255, 255, 0.9);
+    }
+    .dark .card-mobile {
+      box-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.4),
+        0 6px 16px -4px rgba(0, 0, 0, 0.35),
+        0 20px 40px -12px rgba(0, 0, 0, 0.45);
+    }
+    .safe-x {
+      padding-left: max(1rem, env(safe-area-inset-left));
+      padding-right: max(1rem, env(safe-area-inset-right));
+    }
+  }
+
+  /* ─── Specular sheen ───────────────────────────────────────────────────────
+     A highlight that tracks the pointer across a card, so the surface reads as
+     a material catching the room light rather than a flat rectangle.
+
+     In light mode it is a warm *tint*, not a brightening: white-on-white has
+     nowhere to go, so lifting the luminance does nothing and only the hue can
+     carry the effect. The card's own background stays untouched — the sheen is
+     a separate absolutely-positioned layer that fades in on hover, so no
+     repaint of the card's content is ever involved.
+     ------------------------------------------------------------------------ */
+  .sheen-surface { position: relative; }
+  .sheen-surface::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    /* Between the card's own background and its content, which is why every
+       .sheen-surface pairs with a `relative z-10` wrapper inside it. A
+       positioned pseudo-element at z-index 1 would otherwise paint over the
+       text — a 10% orange wash across the labels and the input. */
+    z-index: 1;
+    opacity: 0;
+    background: radial-gradient(
+      340px circle at var(--mx, 50%) var(--my, 0%),
+      var(--sheen),
+      transparent 62%
+    );
+    transition: opacity 320ms var(--ease-standard);
+  }
+  /* Hover is gated on a device that actually has one. A touchscreen reports
+     `hover: none`, and browsers there emulate :hover by latching it on after a
+     tap — so without this gate the highlight would appear on first touch and
+     then stay stuck at whatever point was last touched until something else
+     was tapped. */
+  @media (hover: hover) and (pointer: fine) {
+    .sheen-surface:hover::before { opacity: 1; }
+  }
+
+  /* The touch equivalent. There is no hover to respond to, so the moment of
+     interaction is the press — which is the better trigger anyway (§1: respond
+     on pointer-down, not on release). The highlight blooms under the finger,
+     tracks it 1:1 if it moves, and fades on release.
+     
+     It is warmer and stronger than the hover version because it has to read
+     from under a fingertip that is covering the brightest part of it. */
+  .sheen-surface[data-pressed='true'] {
+    --sheen: rgba(232, 112, 64, 0.26);
+  }
+  .dark .sheen-surface[data-pressed='true'] {
+    --sheen: rgba(255, 255, 255, 0.11);
+  }
+  .sheen-surface[data-pressed='true']::before {
+    opacity: 1;
+    /* Arrives faster than it leaves: feedback has to feel immediate, while a
+       slow fade on release reads as the surface settling rather than the
+       highlight being switched off. */
+    transition: opacity 120ms var(--ease-rise);
+  }
+  /* The bright top edge of the material. One pixel of light along the rim, at
+     full width and fading at both ends, is most of what sells "glass" at rest —
+     and unlike a gradient wash down the face of the card it cannot touch the
+     legibility of anything underneath it. */
+  .sheen-surface::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 12%;
+    right: 12%;
+    height: 1px;
+    pointer-events: none;
+    z-index: 2;
+    background: linear-gradient(90deg, transparent, var(--sheen-edge), transparent);
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    .sheen-surface::before,
+    .sheen-surface::after { display: none; }
+  }
+
+  /* ─── One-shot headline sheen ──────────────────────────────────────────────
+     A band of light crosses the accent line once, as the hero arrives, and
+     never repeats. A looping shimmer on a headline is the single fastest way
+     to make a serious tool look like a template; a single pass on entry reads
+     as the page powering on.
+
+     background-clip: text means the gradient *is* the glyph fill, so the
+     colour has to hold on its own — --orange-ink at both ends, lifted through
+     the middle, rather than a white streak that would blow out on a projector.
+     ------------------------------------------------------------------------ */
+  .headline-sheen {
+    background-image: linear-gradient(
+      100deg,
+      var(--orange-ink) 0%,
+      var(--orange-ink) 38%,
+      var(--orange) 50%,
+      var(--orange-ink) 62%,
+      var(--orange-ink) 100%
+    );
+    background-size: 260% 100%;
+    background-position: 160% 0;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: headline-sheen-pass 1500ms var(--ease-sweep) 620ms both;
+  }
+  @keyframes headline-sheen-pass {
+    from { background-position: 160% 0; }
+    to   { background-position: -60% 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .headline-sheen {
+      animation: none;
+      background-image: none;
+      color: var(--orange-ink);
+    }
+  }
+  /* background-clip: text paints the glyphs with the gradient, which makes
+     `color: transparent` load-bearing — anywhere the property is unsupported
+     the headline renders as nothing at all. Cheap insurance on a machine nobody
+     has tested the presentation on. */
+  @supports not ((background-clip: text) or (-webkit-background-clip: text)) {
+    .headline-sheen {
+      background-image: none;
+      color: var(--orange-ink);
+    }
+  }
+
+  /* Stroke-drawing for the brand mark in the header. Declared here rather than
+     inline so `animate-[brand-draw_...]` in the component resolves to something
+     Tailwind has not had to generate. */
+  @keyframes brand-draw {
+    to { stroke-dashoffset: 0; }
+  }
+
+  /* ─── Brand panel ──────────────────────────────────────────────────────────
+     The pipeline summary hanging off the wordmark. It materialises rather than
+     fading: blur radius, scale and opacity all move together, so the surface
+     reads as a piece of glass arriving in front of the page instead of a
+     rectangle whose alpha went up (§12).
+
+     Blur is the expensive one of the three and it is animated deliberately.
+     Going 0 -> 30px means the frosting *builds* as the panel expands, which is
+     the entire difference between "a translucent box appeared" and "a material
+     condensed here". The panel is 330px wide and this runs once per open, so
+     the cost is bounded and paid at the only moment it buys anything.
+
+     It scales from 0.9 with its origin at the wordmark's top-left corner, so it
+     grows out of the thing that produced it (§7). Exit mirrors the path in on a
+     shorter, non-springy curve — a dismissal that bounces reads as reluctant.
+     ------------------------------------------------------------------------ */
+  .brand-panel {
+    /* Deliberately more transparent than .glass-panel. That surface holds body
+       copy over a busy page and needs the opacity; this one is small, sits
+       against the top of the viewport, and the blur is the point — at 0.86
+       there was nothing behind it left to frost. */
+    background: rgba(255, 255, 255, 0.62);
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    box-shadow:
+      0 1px 2px rgba(62, 48, 34, 0.06),
+      0 12px 28px -8px rgba(62, 48, 34, 0.14),
+      0 32px 64px -24px rgba(62, 48, 34, 0.16);
+    transform-origin: top left;
+    transition:
+      opacity 200ms var(--ease-exit),
+      transform 200ms var(--ease-exit),
+      -webkit-backdrop-filter 200ms var(--ease-exit),
+      backdrop-filter 200ms var(--ease-exit);
+  }
+  .dark .brand-panel {
+    background: rgba(26, 26, 26, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.35),
+      0 12px 28px -8px rgba(0, 0, 0, 0.4),
+      0 32px 64px -24px rgba(0, 0, 0, 0.45);
+  }
+
+  .brand-panel[data-open='false'] {
+    opacity: 0;
+    transform: scale(0.9) translateY(-6px);
+    -webkit-backdrop-filter: blur(0px) saturate(100%);
+    backdrop-filter: blur(0px) saturate(100%);
+    pointer-events: none;
+  }
+
+  .brand-panel[data-open='true'] {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    -webkit-backdrop-filter: blur(44px) saturate(190%);
+    backdrop-filter: blur(44px) saturate(190%);
+    pointer-events: auto;
+    transition:
+      opacity 260ms var(--ease-rise),
+      /* The spring runs on transform only. Opacity and blur on an overshooting
+         curve would visibly dip back after their peak, which looks like a
+         flicker rather than a settle. */
+      transform 520ms var(--spring-pop),
+      -webkit-backdrop-filter 420ms var(--ease-rise),
+      backdrop-filter 420ms var(--ease-rise);
+  }
+
+  /* §14: reduced motion keeps the disclosure, drops the travel and the spring.
+     A cross-fade still tells the user something appeared. */
+  @media (prefers-reduced-motion: reduce) {
+    .brand-panel,
+    .brand-panel[data-open='true'],
+    .brand-panel[data-open='false'] {
+      transform: none;
+      transition: opacity 180ms var(--ease-standard);
+    }
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    .brand-panel[data-open='true'] {
+      background: var(--surface-popover);
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+  }
+
+  /* ─── Chrome bar ───────────────────────────────────────────────────────────
+     The nav is a translucent material with content scrolling underneath it, and
+     it is that at every scroll position — including the top of the page.
+
+     It briefly was not. An earlier pass had it start fully transparent and
+     materialise on the first scroll, on the theory that a bar with nothing
+     beneath it has nothing to sit above. That theory is wrong for this app: the
+     landing screen is where it spends most of its life, there is a drifting
+     ambient field behind the bar the whole time, and removing the blur removed
+     the one thing separating the brand mark from whatever happened to be
+     passing behind it. The blur is the identity, not a scroll affordance.
+
+     It carries no bottom border, at any scroll position. A divider there is the
+     conventional move and it was worse: the blur already separates the bar from
+     what passes under it, so the rule was a second, harder statement of
+     something the material had said more gracefully — and it cut a hard line
+     across the ambient field drifting behind it. The scrim below the bar does
+     the separating now, as a falloff rather than an edge.
+     ------------------------------------------------------------------------ */
+  /* The glass lives on a pseudo-element, not on the bar itself, and that is
+     load-bearing rather than stylistic.
+
+     An element with backdrop-filter becomes a Backdrop Root: any descendant's
+     own backdrop-filter can then only sample what is painted *inside* that
+     root, not the page behind it. The brand panel hangs off the wordmark, which
+     is inside this header — so with the blur declared on .chrome-bar directly,
+     the panel was sampling an empty backdrop and rendering with no frost at all
+     while looking, in the CSS, entirely correct. Moving the filter to ::before
+     leaves the header a plain element, so the panel's backdrop root is the page
+     and its blur resolves against the content actually behind it.
+
+     z-index -1 keeps the glass behind the bar's own content while staying
+     inside the stacking context the fixed header already creates. */
+  /* No `position` declaration here, deliberately. The header carries Tailwind's
+     `fixed` (or `sticky` on the methodology page), and .chrome-bar sits in the
+     same cascade layer at the same specificity but far later in the file — so
+     declaring `position: relative` here silently beat `.fixed` and dropped the
+     bar out of its fixed position into the flow. Both are positioned already,
+     which is all ::before needs to resolve `inset: 0` against, and both already
+     create a stacking context via their z-index, which is all `z-index: -1`
+     needs to stay inside the bar. */
+  .chrome-bar {
+    /* Intentionally empty of layout properties — see above. */
+  }
+  .chrome-bar::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--nav);
+    -webkit-backdrop-filter: blur(30px) saturate(180%);
+    backdrop-filter: blur(30px) saturate(180%);
+  }
+  .light .chrome-bar::before {
+    -webkit-backdrop-filter: blur(16px) saturate(165%);
+    backdrop-filter: blur(16px) saturate(165%);
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    .chrome-bar::before {
+      background: var(--surface-page);
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+  }
+
+  /* ─── Benford curve ────────────────────────────────────────────────────────
+     A band of light crosses the bars once, left to right, after the last one
+     has finished growing — the delay is set inline from the component so it
+     can never fire while the data is still moving. It is the same gesture as
+     the headline sheen, which is the point: two different elements, one idea.
+     ------------------------------------------------------------------------ */
+  .curve-sweep::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      100deg,
+      transparent 38%,
+      var(--sheen-edge) 50%,
+      transparent 62%
+    );
+    background-size: 260% 100%;
+    animation: curve-sweep-pass 1400ms var(--ease-sweep) var(--sweep-delay, 0ms) both;
+    mix-blend-mode: overlay;
+  }
+  @keyframes curve-sweep-pass {
+    from { background-position: 170% 0; opacity: 0; }
+    18%  { opacity: 1; }
+    82%  { opacity: 1; }
+    to   { background-position: -70% 0; opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .curve-sweep::after { animation: none; opacity: 0; }
+  }
+
+  /* ─── Risk ring halo ───────────────────────────────────────────────────────
+     A soft disc of the ring's own colour behind it. The colour is handed in
+     from the component, which is already interpolating it frame by frame as
+     the figure counts up, so the halo warms from green to red along with the
+     arc instead of being a second, independent animation to keep in sync.
+
+     It breathes on a 4.4s cycle. That sits just outside the ~0.2Hz band §14
+     warns about, and it is a small element rather than a full-viewport one —
+     the pulse reads as the number settling, not as the page throbbing.
+     ------------------------------------------------------------------------ */
+  .ring-halo {
+    position: absolute;
+    inset: 8%;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--halo) 0%, transparent 66%);
+    filter: blur(18px);
+    animation: ring-breathe 4.4s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes ring-breathe {
+    0%, 100% { opacity: 0.62; transform: scale(0.97); }
+    50%      { opacity: 1;    transform: scale(1.04); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ring-halo { animation: none; opacity: 0.8; }
+  }
+
+  /* ─── Scan stage ───────────────────────────────────────────────────────────
+     The processing screen used to be five seconds of a pulsing bar. This turns
+     that wait into the most interesting thing on screen: the document the user
+     just handed over, with a line sweeping down it and brackets locking onto
+     its corners.
+
+     What is deliberately *not* here: fabricated detection boxes. Drawing
+     rectangles over the real document as though OCR had found something there
+     would be inventing analysis output — the animation may say "this is being
+     read", it may not say "this is what was found". The typed path is the one
+     case where the highlight is real, because those digits genuinely are the
+     value under analysis, and there the sweep lights each one as it passes.
+     ------------------------------------------------------------------------ */
+  .scan-stage {
+    position: relative;
+    overflow: hidden;
+    /* Its own stacking context, so the sweep and the brackets can never be
+       painted over by a sibling that happens to come later. */
+    isolation: isolate;
+  }
+
+  /* The line itself: a bright 1px core riding a soft gradient, so it reads as
+     light passing over a surface rather than a rule sliding down it. */
+  .scan-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 84px;
+    pointer-events: none;
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      color-mix(in oklch, var(--orange), transparent 88%) 55%,
+      color-mix(in oklch, var(--orange), transparent 55%) 92%,
+      var(--orange) 100%
+    );
+    box-shadow: 0 1px 12px 0 color-mix(in oklch, var(--orange), transparent 55%);
+    animation: scan-sweep 2.6s var(--ease-sweep) infinite;
+    will-change: transform;
+  }
+  @keyframes scan-sweep {
+    0%        { transform: translate3d(0, -84px, 0); opacity: 0; }
+    12%       { opacity: 1; }
+    82%       { opacity: 1; }
+    100%      { transform: translate3d(0, calc(var(--scan-h, 240px)), 0); opacity: 0; }
+  }
+
+  /* A faint measurement grid over the document, so the frame reads as an
+     instrument looking at the page rather than a photo with a line on it. */
+  .scan-grid {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(to right, color-mix(in oklch, var(--orange), transparent 90%) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in oklch, var(--orange), transparent 90%) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+
+  /* Corner brackets breathe on the same 2.6s cycle as the sweep, so the frame
+     pulses once per pass — one rhythm, not two competing ones. */
+  .scan-bracket {
+    animation: scan-lock 2.6s var(--ease-sweep) infinite;
+  }
+  @keyframes scan-lock {
+    0%, 100% { opacity: 0.45; transform: scale(1); }
+    50%      { opacity: 1;    transform: scale(1.12); }
+  }
+
+  /* Typed values: each digit lights as the sweep reaches it. The delay is set
+     per-glyph from the component, derived from its index, so the highlight
+     tracks the line instead of running on a timer of its own. */
+  .scan-digit {
+    animation: scan-digit-hit 2.6s var(--ease-sweep) var(--digit-delay, 0ms) infinite;
+  }
+  @keyframes scan-digit-hit {
+    0%, 100% { color: var(--muted-foreground); transform: translateY(0); }
+    6%       { color: var(--orange-ink); transform: translateY(-2px); }
+    22%      { color: var(--foreground); transform: translateY(0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .scan-line { animation: none; opacity: 0; }
+    .scan-bracket { animation: none; opacity: 0.7; }
+    .scan-digit { animation: none; color: var(--foreground); }
+  }
+
+  /* ─── Verdict bloom ────────────────────────────────────────────────────────
+     A wash of the verdict's own colour expands out from behind the banner once,
+     as it lands, and does not repeat. It is the payoff of the whole flow — the
+     one moment in the app that has earned a flourish — and a single expanding
+     bloom says "this is the answer" without the banner having to shout in type.
+
+     --bloom is handed in from the component, so red, amber and green each bloom
+     in their own colour rather than sharing one neutral flash.
+     ------------------------------------------------------------------------ */
+  .verdict-bloom {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    background: radial-gradient(120% 140% at 12% 50%, var(--bloom), transparent 62%);
+    animation: verdict-bloom-out 1400ms var(--ease-rise) 120ms both;
+  }
+  @keyframes verdict-bloom-out {
+    0%   { opacity: 0; transform: scale(0.7); }
+    30%  { opacity: 1; }
+    100% { opacity: 0; transform: scale(1.15); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .verdict-bloom { animation: none; opacity: 0; }
+  }
+
+  /* ─── Live sampler ─────────────────────────────────────────────────────────
+     Sample figures streaming into the hero's histogram. Each one flies in, its
+     leading digit is picked out, and the corresponding bar grows.
+
+     It converges and stops rather than looping. That distinction is the whole
+     reason it is defensible in a hero: a perpetual animation is decoration, and
+     the eye learns to discard it within seconds. A demonstration that runs once,
+     reaches the real distribution and holds there is an argument — and the
+     thing it settles into is the curve the analysis engine actually tests.
+     ------------------------------------------------------------------------ */
+  .sample-fly {
+    animation: sample-fly-in 900ms var(--ease-rise) both;
+  }
+  @keyframes sample-fly-in {
+    0%   { opacity: 0; transform: translate3d(0, 10px, 0) scale(0.9); }
+    22%  { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+    72%  { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+    100% { opacity: 0; transform: translate3d(0, -12px, 0) scale(0.96); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sample-fly { animation: none; opacity: 1; }
+  }
+
+  /* The bar that just received a sample flashes brighter for a beat, so the
+     link between the figure flying in and the column that grows is visible
+     rather than something the viewer has to infer. */
+  .bar-hit {
+    animation: bar-hit-flash 520ms var(--ease-rise) both;
+  }
+  @keyframes bar-hit-flash {
+    0%   { filter: brightness(1.42) saturate(1.15); }
+    100% { filter: brightness(1) saturate(1); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .bar-hit { animation: none; }
+  }
+
+  /* ─── Pipeline flow ────────────────────────────────────────────────────────
+     A pulse travels each connector on the methodology page's pipeline diagram,
+     staggered so the ten of them read as one packet moving left to right rather
+     than ten dots blinking at once. The diagram is a claim about a sequence;
+     this is the sequence, animated.
+
+     4.2s per cycle with a 190ms stagger puts the whole run at roughly 0.24Hz
+     for any single connector — but the dot is 5px inside a 24px span, not a
+     full-viewport surface, so it reads as flow rather than as a pulse. It stops
+     entirely under reduced motion, where the connectors still say everything
+     they need to say by being lines with arrowheads on them.
+     ------------------------------------------------------------------------ */
+  .pipe { position: relative; overflow: hidden; }
+  .pipe::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 5px;
+    height: 5px;
+    margin-top: -2.5px;
+    border-radius: 50%;
+    background: var(--orange);
+    animation: pipe-flow 4.2s var(--ease-sweep) var(--pipe-delay, 0ms) infinite;
+  }
+  @keyframes pipe-flow {
+    0%        { transform: translate3d(-6px, 0, 0); opacity: 0; }
+    8%        { opacity: 1; }
+    22%       { transform: translate3d(24px, 0, 0); opacity: 0; }
+    22.01%, 100% { transform: translate3d(-6px, 0, 0); opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pipe::after { animation: none; opacity: 0; }
+  }
+
+  /* ─── Verdict seal ─────────────────────────────────────────────────────────
+     The result screen's answer, stamped rather than displayed.
+
+     The problem this solves is hierarchy, not decoration. The verdict used to
+     be a thin strip with 22px type sitting above a 180px risk ring, so the
+     largest, most saturated object on the screen was the *score* — and the eye
+     went there first. A reader met the number before the answer and had to work
+     out which one was the conclusion. The seal reverses that: it is the biggest
+     thing in the column, it carries the verdict's colour, and the sentence
+     under it is set at reading size instead of footnote size.
+
+     The gesture is a stamp, in four beats that overlap rather than queue:
+     the disc springs in, the ring sweeps around it, the glyph draws itself, and
+     the bloom washes outward. Drawing the glyph — rather than fading in a
+     finished icon — is what makes it read as a mark being *made*. Total run is
+     just over a second, which is the length of a physical stamp coming down.
+     ------------------------------------------------------------------------ */
+  .seal-glow {
+    position: absolute;
+    inset: -18%;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--seal), transparent 62%);
+    filter: blur(20px);
+    animation: seal-glow-in 900ms var(--ease-rise) 120ms both;
+    pointer-events: none;
+  }
+  @keyframes seal-glow-in {
+    from { opacity: 0; transform: scale(0.6); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
+  /* The disc lands first, on the spring, so the whole mark has something to
+     arrive on before any of the linework starts. */
+  .seal-disc {
+    animation: seal-pop 620ms var(--spring-pop) 60ms both;
+    transform-origin: center;
+  }
+  @keyframes seal-pop {
+    from { opacity: 0; transform: scale(0.72); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
+  /* pathLength is set to 100 on every drawn path, so one dash length works for
+     the ring and all three glyphs regardless of their real geometry. */
+  .seal-ring {
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    animation: seal-draw 900ms var(--ease-rise) 180ms both;
+  }
+  .seal-glyph {
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    animation: seal-draw 620ms var(--ease-rise) 460ms both;
+  }
+  @keyframes seal-draw {
+    to { stroke-dashoffset: 0; }
+  }
+
+  /* The question mark's dot cannot be drawn — it has no length — so it arrives
+     on the same spring the disc used, timed to land as the stroke finishes. */
+  .seal-dot {
+    transform-origin: center;
+    animation: seal-pop 420ms var(--spring-pop) 940ms both;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .seal-glow,
+    .seal-disc,
+    .seal-dot { animation: none; opacity: 1; transform: none; }
+    .seal-ring,
+    .seal-glyph { animation: none; stroke-dashoffset: 0; }
+  }
+
+  /* ─── Verdict banner ───────────────────────────────────────────────────────
+     The one result on screen the user actually came for, so it arrives with a
+     little more presence than the panels under it: a short scale-up from 97%
+     alongside the shared rise. Bounce is deliberately absent — a fraud verdict
+     that springs into place is the wrong tone for the message it carries.
+     ------------------------------------------------------------------------ */
+  @keyframes verdict-in {
+    from { opacity: 0; transform: translate3d(0, 10px, 0) scale(0.97); }
+    to   { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+  }
+  .verdict-rise {
+    animation: verdict-in 520ms var(--ease-rise) both;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .verdict-rise { animation: none; }
+  }
+
+  @media (prefers-reduced-transparency: reduce) {
+    .glass-panel,
+    .light .glass-panel,
+    :root:not(.dark):not(.light) .glass-panel {
+      background: var(--surface-card);
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+    .nav-glass,
+    .light .nav-glass,
+    :root:not(.dark):not(.light) .nav-glass {
+      background: var(--surface-page);
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════════
+     MOBILE — SECOND PASS
+     ─────────────────────────────────────────────────────────────────────────
+     The first pass sized things down. What was still wrong was not size, it was
+     that a phone had been given a smaller copy of a pointer interface:
+
+       · Every env(safe-area-inset-*) below was resolving to 0, because the
+         viewport was never declared `viewport-fit=cover`. The clearance the
+         previous pass wrote had therefore never once been applied on a notched
+         phone. Fixed in app/layout.tsx; the rules here are what consume it.
+       · Only three controls in the entire app had a touch press state. Every
+         other one — the accordion rows, the confirm cards, the theme toggle,
+         the wordmark, both bottom buttons — got the browser's grey tap flash
+         and nothing else.
+       · Several controls were drawn well under 44pt: a 28px remove button, an
+         18px dismiss, a text-height reveal toggle.
+       · The primary action was pinned to the thumb on the input screen only.
+         Confirm and Results left theirs at the bottom of a scroll.
+       · The one menu in the app was a hover popover hanging off a fixed
+         header — a cursor pattern, and on Android its focus/click pair opened
+         and closed it in the same tap.
+
+     Every rule from here to the end of this file is inside
+     `@media (width < 40rem)`. Nothing below can reach the desktop layout.
+     ═══════════════════════════════════════════════════════════════════════ */
+
+  /* ─── Foundation ──────────────────────────────────────────────────────── */
+  @media (width < 40rem) {
+    /* The platform tap flash. Every press state in this app is drawn
+       deliberately — a state layer, a scale, a shape change. The browser's grey
+       rectangle arrives on top of all of them, a frame late and the wrong
+       shape, and it is most of why the controls read as untuned. */
+    a,
+    button,
+    label,
+    summary,
+    input,
+    select,
+    textarea,
+    [role='button'],
+    [role='tab'] {
+      -webkit-tap-highlight-color: transparent;
+      /* Drops the double-tap-to-zoom wait on every control, which is the
+         ~300ms of dead time between the tap and anything happening (§1).
+         Pinch zoom and panning are unaffected. */
+      touch-action: manipulation;
+    }
+
+    /* Also switches off pull-to-refresh, which is the point. A verdict lives
+       entirely in component state — reloading the page throws away the analysis
+       the user just waited through — and an over-scroll at the top of a short
+       screen is an easy accident to have. */
+    body {
+      overscroll-behavior-y: none;
+    }
+
+    /* A 44pt hit target without a 44pt box. The pseudo-element is never
+       painted — it exists only so a control that the layout wants small (an
+       icon, a reveal toggle, a dismiss) can still be *hit* at the size the HIG
+       asks for. Do not put it on anything inside `overflow: hidden`. */
+    .tap {
+      position: relative;
+    }
+    .tap::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: max(100%, 2.75rem);
+      height: max(100%, 2.75rem);
+      transform: translate(-50%, -50%);
+    }
+
+    /* Chrome offsets. The header is 3.5rem of bar plus whatever the status bar
+       or dynamic island is standing in front of, and three separate things
+       have to agree on that number: the bar's own padding, the page's top
+       inset, and the fade that washes content into the bar's lower edge. */
+    .chrome-bar {
+      padding-top: env(safe-area-inset-top);
+    }
+    /* The page's own top inset and the fade that washes content into the bar's
+       lower edge are expressed as `max-sm:` arbitrary values at their call
+       sites, so they win over the desktop `pt-16` / `top-16` by Tailwind's own
+       variant ordering rather than by where they happen to sit in this file. */
+  }
+
+  /* ─── Press feedback ──────────────────────────────────────────────────────
+     .m3-press already carried the state layer, but only ever lit up from the
+     pointer handlers in sheen.ts, and those were attached to three elements.
+     Adding :active gives the same control a CSS-only half, so a control gets
+     the press whether or not it also gets the handlers — and where it gets
+     both, the handlers are what place the wash under the actual touch point.
+
+     :active is reliable here because the document already carries pointer
+     listeners; iOS only begins delivering :active once something does.
+     ---------------------------------------------------------------------- */
+  @media (width < 40rem) {
+    .m3-press:active {
+      transform: scale(0.978);
+    }
+    .m3-press:active::after {
+      opacity: 0.16;
+      transition: opacity 80ms var(--ease-rise);
+    }
+
+    /* Rows do not scale. A full-width row shrinking on press reads as the page
+       flinching; a wash that lands under the finger reads as the row being
+       touched. Used for list rows — the checks accordion, the capability list,
+       the confirm cards — where .m3-press's scale would be wrong. */
+    .row-press {
+      position: relative;
+      isolation: isolate;
+    }
+    /* ::before rather than ::after, because the checks accordion's trigger
+       already owns ::after for its focus ring.
+
+       No z-index. The first attempt put it at -1 to keep it behind the label,
+       which also put it behind the row's own background — and most of these
+       rows sit on an opaque --surface-inset, so the wash was drawn and then
+       painted straight over. A positioned pseudo-element with no z-index paints
+       above in-flow content, which is where a state layer belongs anyway: it is
+       a light over the control, not a fill under it. */
+    .row-press::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+      background: radial-gradient(
+        circle at var(--mx, 50%) var(--my, 50%),
+        currentColor 0%,
+        transparent 72%
+      );
+      opacity: 0;
+      transition: opacity 320ms var(--ease-standard);
+    }
+    /* In fast, out slow, for the same reason .m3-press is: the acknowledgement
+       has to be instant, the release reads as the surface settling. */
+    .row-press[data-pressed='true']::before,
+    .row-press:active::before {
+      opacity: 0.075;
+      transition: opacity 70ms var(--ease-rise);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .m3-press:active {
+        transform: none;
+      }
+    }
+  }
+
+  /* ─── Segmented control ───────────────────────────────────────────────────
+     The three ways into this app were a text field, a dashed upload box and a
+     text link, stacked, with an "OR" rule between the first two — roughly 320px
+     of card spent making someone read all three options before choosing one,
+     and a layout that only makes sense when the page is wide enough that the
+     stack is cheap.
+
+     As a segment they are one 48px row. The choice is legible at a glance, the
+     current one is unambiguous, and the card below only ever shows what that
+     choice actually needs.
+
+     The thumb is one element that slides, not a background that moves between
+     three. That is what makes the change read as a single object travelling,
+     and it is what lets the motion carry a spring (§4).
+     ---------------------------------------------------------------------- */
+  @media (width < 40rem) {
+    .seg {
+      position: relative;
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: 1fr;
+      padding: 0.25rem;
+      border-radius: 9999px;
+      background: var(--surface-inset);
+      box-shadow:
+        inset 0 1px 2px rgba(62, 48, 34, 0.06),
+        inset 0 0 0 1px var(--hairline);
+    }
+    .dark .seg {
+      box-shadow:
+        inset 0 1px 2px rgba(0, 0, 0, 0.35),
+        inset 0 0 0 1px var(--hairline);
+    }
+
+    .seg-thumb {
+      position: absolute;
+      top: 0.25rem;
+      bottom: 0.25rem;
+      left: 0.25rem;
+      width: calc((100% - 0.5rem) / var(--seg-n));
+      border-radius: 9999px;
+      pointer-events: none;
+      background: var(--surface-card);
+      box-shadow:
+        0 1px 1px rgba(62, 48, 34, 0.05),
+        0 3px 8px -2px rgba(62, 48, 34, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+      transform: translate3d(calc(var(--seg-i, 0) * 100%), 0, 0);
+      /* --spring-pop overshoots ~1.5%, so the thumb arrives past its stop and
+         settles back. Earned here: the user's tap is the momentum. */
+      transition: transform 420ms var(--spring-pop);
+    }
+    .dark .seg-thumb {
+      background: var(--surface-raised);
+      box-shadow:
+        0 2px 8px -2px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+
+    .seg-item {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      min-height: 2.75rem;
+      align-items: center;
+      justify-content: center;
+      gap: 0.375rem;
+      border-radius: 9999px;
+      color: var(--muted-foreground);
+      transition:
+        color 240ms var(--ease-standard),
+        transform 160ms var(--ease-standard);
+    }
+    .seg-item[aria-selected='true'] {
+      color: var(--foreground);
+    }
+    /* Both, because they cover different ground: [data-pressed] is written by
+       the pointer handlers and is what fires on the first touch, while :active
+       covers a keyboard Enter and anything that reaches the control without
+       them. */
+    .seg-item[data-pressed='true'],
+    .seg-item:active {
+      transform: scale(0.955);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .seg-thumb,
+      .seg-item {
+        transition: none;
+      }
+      .seg-item[data-pressed='true'],
+      .seg-item:active {
+        transform: none;
+      }
+    }
+  }
+
+  /* Mobile-only surfaces. The display switch is declared here, outside the
+     media query, so that at 640px and above these are simply absent rather than
+     unstyled — everything else about them lives in the mobile block below, and
+     without this a desktop viewport would render a bare unpositioned div in the
+     document flow. */
+  .sheet,
+  .sheet-scrim {
+    display: none;
+  }
+
+  /* ─── Bottom sheet ────────────────────────────────────────────────────────
+     What a dropdown becomes on a phone. The brand panel was a 330px popover
+     hanging off a fixed header: a pattern that assumes a cursor to hover with,
+     and one whose content ran past half the screen anyway. From the bottom edge
+     it starts where the thumb already is, and it can be thrown away rather than
+     dismissed by locating a close button.
+
+     Position comes from --sheet-y, which the drag writes on every pointermove.
+     The transition is switched off while a finger is down so the surface tracks
+     1:1 (§2), and switched back on at release so the spring picks up from the
+     gesture's own velocity rather than restarting from rest (§5).
+     ---------------------------------------------------------------------- */
+  @media (width < 40rem) {
+    .sheet-scrim {
+      display: block;
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      background: rgba(12, 10, 9, 0.44);
+      -webkit-backdrop-filter: blur(3px);
+      backdrop-filter: blur(3px);
+      opacity: 0;
+      visibility: hidden;
+      transition:
+        opacity 260ms var(--ease-standard),
+        visibility 0s linear 260ms;
+    }
+    .sheet-scrim[data-open='true'] {
+      /* Written by the drag, so the scrim fades as the sheet is pushed down —
+         the dim tracks the gesture instead of waiting for it to commit. */
+      opacity: var(--scrim-o, 1);
+      visibility: visible;
+      transition:
+        opacity 260ms var(--ease-standard),
+        visibility 0s;
+    }
+
+    .sheet {
+      display: flex;
+      position: fixed;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 61;
+      max-height: 86dvh;
+      flex-direction: column;
+      border-radius: 1.75rem 1.75rem 0 0;
+      background: var(--surface-card);
+      box-shadow:
+        0 -0.5px 0 var(--hairline-strong),
+        0 -10px 44px -10px rgba(62, 48, 34, 0.3);
+      /* Clears the home indicator. Additive, not max(): the indicator's inset is
+         the space the *system* needs, and the sheet's own bottom padding is
+         still owed on top of it. */
+      padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
+      transform: translate3d(0, calc(100% + 1px), 0);
+      visibility: hidden;
+      transition:
+        transform 420ms var(--spring-pop),
+        visibility 0s linear 420ms;
+    }
+    .dark .sheet {
+      box-shadow:
+        0 -0.5px 0 var(--hairline-strong),
+        0 -10px 44px -10px rgba(0, 0, 0, 0.6);
+    }
+    .sheet[data-open='true'] {
+      transform: translate3d(0, var(--sheet-y, 0px), 0);
+      visibility: visible;
+      transition:
+        transform 420ms var(--spring-pop),
+        visibility 0s;
+    }
+    /* Straight to the finger. Any easing at all here is latency (§1, §2). */
+    .sheet[data-dragging='true'] {
+      transition: none;
+    }
+    /* Exit along the path it entered on (§7): the same axis, mirrored curve. */
+    .sheet[data-open='false'] {
+      transition:
+        transform var(--dur-exit) var(--ease-exit),
+        visibility 0s linear var(--dur-exit);
+    }
+
+    .sheet-grip {
+      flex-shrink: 0;
+      /* The grab area, not the bar. The bar is 5px; a 5px drag handle is not a
+         handle. Everything above the scroll region drags. */
+      padding: 0.6875rem 0 0.5rem;
+      cursor: grab;
+      touch-action: none;
+    }
+    .sheet-grip::before {
+      content: '';
+      display: block;
+      width: 2.25rem;
+      height: 0.3125rem;
+      margin: 0 auto;
+      border-radius: 9999px;
+      background: var(--hairline-strong);
+    }
+    .sheet-body {
+      min-height: 0;
+      flex: 1;
+      overflow-y: auto;
+      /* Stops a flick inside the sheet from scrolling the page behind it once
+         the list reaches its end. */
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    @media (prefers-reduced-transparency: reduce) {
+      .sheet-scrim {
+        background: rgba(12, 10, 9, 0.62);
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      /* Not "no feedback" — a cross-fade in place, which carries the same
+         appear/disappear without the vestibular travel (§14). */
+      .sheet,
+      .sheet[data-open='true'],
+      .sheet[data-open='false'] {
+        transform: none;
+        opacity: 0;
+        transition:
+          opacity 200ms linear,
+          visibility 0s linear 200ms;
+      }
+      .sheet[data-open='true'] {
+        opacity: 1;
+        transition:
+          opacity 200ms linear,
+          visibility 0s;
+      }
+    }
+  }
+
+  /* ─── Action bar, corrected and generalised ───────────────────────────────
+     Two changes. The padding was `max(0.75rem, env(safe-area-inset-bottom))`,
+     which on an iPhone resolves to the inset alone — 34px of padding with the
+     button sitting flush against the home indicator, rather than 12px of gap
+     *plus* the indicator's clearance. It is additive now.
+
+     And it is no longer the input screen's private furniture: confirm and
+     results use it too, so the primary action is in the same place at every
+     step instead of appearing for one screen and then scrolling away.
+     ---------------------------------------------------------------------- */
+  @media (width < 40rem) {
+    .action-bar {
+      padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+    }
+    /* Fades the content into the bar rather than cutting it off at a hairline —
+       the scroll-edge treatment from §12, at the bottom edge where this app's
+       floating chrome actually overlaps content. */
+    .action-bar::before {
+      content: '';
+      position: absolute;
+      right: 0;
+      bottom: 100%;
+      left: 0;
+      height: 1.5rem;
+      pointer-events: none;
+      background: linear-gradient(
+        to top,
+        color-mix(in oklch, var(--surface-page), transparent 10%),
+        transparent
+      );
+    }
+  }
+}
