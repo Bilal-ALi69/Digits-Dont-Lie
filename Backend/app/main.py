@@ -16,7 +16,7 @@ from __future__ import annotations
 import argparse
 import sys
 
-from app.models import AnalysisResponse, CheckStatus
+from app.models import AnalysisResponse
 
 # ---------------------------------------------------------------------------
 # Demo datasets

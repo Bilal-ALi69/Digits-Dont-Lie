@@ -121,7 +121,7 @@ def verify_bank_balance(
         confidence=1.0,
         severity=Severity.NONE if passed else Severity.HIGH,
         message=(
-            f"Balance arithmetic is consistent (opening + credits - debits = closing)."
+            "Balance arithmetic is consistent (opening + credits - debits = closing)."
             if passed
             else f"Balance mismatch: expected {expected_closing}, stated {closing} (diff: {diff})."
         ),

@@ -532,9 +532,13 @@ def analyze_document_text(
 
     if document_kind:
         # The page states figures that verify against each other, which is what
-        # it means to be an invoice or a statement. Record that as the document
-        # type: leaving it unset let the client fall back to its own default and
-        # announce a scanned invoice as an "ID Number".
+        # it means to be an invoice or a statement. Record that as the
+        # document type. Leaving it unset let the client fall back to its own
+        # default and announce a scanned invoice as an "ID Number".
+        #
+        # Keep "type:" off the start of a comment line: Python parses
+        # "# type: ..." as a PEP 484 type comment, and any tool reading this
+        # file with type_comments=True (mypy, vulture) fails on it.
         label = "Invoice" if document_kind == "invoice" else "Bank statement"
         response.top_document_type = document_kind
         response.document_candidates = [ClassificationCandidate(
@@ -934,7 +938,6 @@ def _analyze_image(
 ) -> AnalysisResponse:
     try:
         from app.ocr import (
-            OcrCardCandidate,
             extract_best_card_candidate,
             extract_text_readings,
         )

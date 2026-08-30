@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
 import os
@@ -19,7 +18,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from app.api.rate_limit import SlidingWindowLimiter, client_key
-from app.models import AnalysisResponse, ClassificationResponse, InputType
+from app.models import AnalysisResponse, ClassificationResponse
 from app.orchestrator import (
     analyze_dataset,
     analyze_document_text,

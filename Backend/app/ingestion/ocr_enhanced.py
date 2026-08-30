@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import re
 
-from app.models import Evidence, CheckCategory, CheckStatus
 
 
 _CURRENCY_SYMBOLS = re.compile(r"[\$£€₹]")

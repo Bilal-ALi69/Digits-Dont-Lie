@@ -26,7 +26,6 @@ Setup (one-time, per machine):
 import re
 import sys
 from dataclasses import dataclass
-from typing import NotRequired, TypedDict
 
 try:
     import pytesseract
@@ -163,8 +162,8 @@ def _print_document_results(image_path: str) -> None:
         print()
         print(f" Total analysed : {result['total_count']}  (rejected: {result['invalid_count']})")
         print(f" Chi-square     : {result['chi_square']:.4f}")
-        print(f"  (lower = closer to Benford's Law; ~16.9+ at 8 dof suggests")
-        print(f"   the data does NOT follow Benford's Law)")
+        print("  (lower = closer to Benford's Law; ~16.9+ at 8 dof suggests")
+        print("   the data does NOT follow Benford's Law)")
     print()
 
 

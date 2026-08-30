@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 
-from app.models import Evidence, CheckCategory, CheckStatus, Severity
+from app.models import Evidence, CheckCategory, CheckStatus
 
 
 def extract_cv_sections(text: str) -> dict[str, list[str]]:

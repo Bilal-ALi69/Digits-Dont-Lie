@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-import os
-import tempfile
 
-from app.models import Evidence, CheckCategory, CheckStatus
 
 # A malicious or malformed PDF can declare far more pages than its file size
 # suggests (a "page bomb") — each OCR'd page costs a full Tesseract pass at

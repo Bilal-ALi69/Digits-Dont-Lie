@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react"
 import {
   CheckCircle2Icon,
-  CircleHelpIcon,
   EyeIcon,
   EyeOffIcon,
   ImageIcon,

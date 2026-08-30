@@ -32,7 +32,6 @@ import {
   Reveal,
   Section,
   Steps,
-  Strong,
   Terms,
 } from "@/components/methodology/primitives"
 import { cn } from "@/lib/utils"

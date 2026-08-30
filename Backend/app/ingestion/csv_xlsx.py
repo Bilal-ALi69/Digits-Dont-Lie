@@ -3,11 +3,7 @@
 from __future__ import annotations
 
 import csv
-import io
-import os
-from pathlib import Path
 
-from app.models import Evidence, CheckCategory, CheckStatus
 
 
 def read_csv(file_path: str) -> tuple[list[str], list[list[str]]]:

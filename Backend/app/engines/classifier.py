@@ -319,7 +319,6 @@ def _classify_document_layer(
 ) -> list[ClassificationCandidate]:
     """Classify the document-type layer based on value signals and context."""
     candidates: list[ClassificationCandidate] = []
-    is_numeric = cleaned.isdigit()
 
     # Card document detection
     card_candidate = next((c for c in value_candidates if c.type == ValueType.CARD_NUMBER.value), None)
@@ -375,10 +374,6 @@ def _classify_document_layer(
 
     # ID document detection
     if context and (_CONTEXT_ID_RE.search(context) or _CONTEXT_CNIC_RE.search(context)):
-        id_candidate = next((c for c in value_candidates if c.type in (
-            ValueType.ID_NUMBER.value, ValueType.PASSPORT_NUMBER.value, ValueType.LICENSE_NUMBER.value
-        )), None)
-
         if context and re.search(r"passport", context, re.IGNORECASE):
             candidates.append(ClassificationCandidate(
                 type=DocumentType.PASSPORT.value,

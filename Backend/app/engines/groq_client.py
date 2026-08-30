@@ -9,7 +9,6 @@ import time
 from pathlib import Path
 from typing import Any
 
-from app.models import Evidence, CheckCategory, CheckStatus
 
 try:
     from dotenv import load_dotenv
@@ -134,6 +133,11 @@ class GroqClient:
                 if attempt < _MAX_RETRIES:
                     time.sleep(0.5 * (attempt + 1))
 
+        # Every attempt failed. The caller only learns that AI enrichment was
+        # unavailable, which is the right contract - but without this the
+        # reason was discarded entirely, leaving no way to tell a bad key from
+        # a rate limit from an outage.
+        _log.warning("Groq request failed after %d attempts: %s", _MAX_RETRIES + 1, last_error)
         return None
 
 
