@@ -517,7 +517,16 @@ export function VerifierApp() {
           setResult(r)
           setStage("results")
         })
-        .catch(() => {
+        .catch((err) => {
+          // Must report, not just recover. This is the path every manually
+          // typed value takes (typed input always routes through confirm), so
+          // a backend that dies here is the most likely failure a viewer will
+          // ever see — and without setApiError it fell through to the offline
+          // engine in complete silence. The fabricated client-side result then
+          // renders identically to a real one, which is the exact failure the
+          // health-check branch in handleAnalyze already refuses to allow.
+          console.error("Backend analysis failed after confirm:", err)
+          setApiError(err instanceof Error ? err.message : "Backend analysis failed")
           setResult(clientAnalyze(p.value, type, p.rawText))
           setStage("results")
         })

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { BACKEND_URL, MAX_UPLOAD_BYTES, backendHeaders, relayResponse } from "@/lib/backend"
+import { BACKEND_URL, MAX_UPLOAD_BYTES, backendHeaders, relayResponse, backendUnreachable } from "@/lib/backend"
 
 export async function POST(request: NextRequest) {
   const inputType = request.nextUrl.searchParams.get("input_type") || "auto"
@@ -23,9 +23,14 @@ export async function POST(request: NextRequest) {
 
   // Content-Type is intentionally left unset so fetch generates the correct
   // multipart boundary itself for the forwarded FormData body.
-  const res = await fetch(
-    `${BACKEND_URL}/api/analyze/upload?input_type=${encodeURIComponent(inputType)}`,
-    { method: "POST", headers: backendHeaders(), body: form },
-  )
+  let res: Response
+  try {
+    res = await fetch(
+      `${BACKEND_URL}/api/analyze/upload?input_type=${encodeURIComponent(inputType)}`,
+      { method: "POST", headers: backendHeaders(), body: form },
+    )
+  } catch (err) {
+    return backendUnreachable(err)
+  }
   return relayResponse(res)
 }

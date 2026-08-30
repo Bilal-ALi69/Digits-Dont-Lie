@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { BACKEND_URL, MAX_UPLOAD_BYTES, backendHeaders, relayResponse } from "@/lib/backend"
+import { BACKEND_URL, MAX_UPLOAD_BYTES, backendHeaders, relayResponse, backendUnreachable } from "@/lib/backend"
 
 export async function POST(request: NextRequest) {
   // Same guard as app/api/analyze/upload/route.ts, and for the same reason:
@@ -21,10 +21,15 @@ export async function POST(request: NextRequest) {
 
   // Content-Type is intentionally left unset so fetch generates the correct
   // multipart boundary itself for the forwarded FormData body.
-  const res = await fetch(`${BACKEND_URL}/api/classify/image`, {
-    method: "POST",
-    headers: backendHeaders(),
-    body: form,
-  })
+  let res: Response
+  try {
+    res = await fetch(`${BACKEND_URL}/api/classify/image`, {
+      method: "POST",
+      headers: backendHeaders(),
+      body: form,
+    })
+  } catch (err) {
+    return backendUnreachable(err)
+  }
   return relayResponse(res)
 }

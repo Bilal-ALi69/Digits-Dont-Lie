@@ -105,7 +105,16 @@ export default function RootLayout({
       </head>
       <body className="font-sans antialiased bg-surface-page">
         {children}
-        {process.env.NODE_ENV === 'production' && <Analytics />}
+        {/* Gated on being deployed to Vercel, not on NODE_ENV. `next start`
+            — the way this app is run for a live demo on a laptop — sets
+            NODE_ENV=production too, so the old gate let <Analytics /> mount
+            off-platform, where its beacon script does not exist. Every visitor
+            then took a 404 on /_vercel/insights/script.js plus a MIME-type
+            refusal, so a devtools console opened in front of an audience showed
+            two errors before anyone touched the app. VERCEL is set by the build
+            environment on Vercel and nowhere else, which is the actual
+            condition under which that script resolves. */}
+        {process.env.VERCEL === '1' && <Analytics />}
       </body>
     </html>
   )
