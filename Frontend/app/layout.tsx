@@ -1,11 +1,28 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
+import { Inter, JetBrains_Mono, Space_Grotesk } from 'next/font/google'
 import './globals.css'
 
+// All three faces go through next/font so they are self-hosted from this
+// origin and preloaded. globals.css previously pulled the latter two with a
+// CSS @import of fonts.googleapis.com, which is render-blocking and
+// serialised: the browser had to fetch the stylesheet, parse it, discover the
+// import, then hit two more origins before any text could paint in them.
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
+  display: 'swap',
+})
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-jetbrains-mono',
+  display: 'swap',
+})
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  variable: '--font-space-grotesk',
   display: 'swap',
 })
 
@@ -62,7 +79,11 @@ export default function RootLayout({
     // suppressHydrationWarning: the script below adds a class to <html> before
     // React hydrates, so the server's markup and the client's necessarily differ
     // on that one attribute. Nothing else about the tree is affected.
-    <html lang="en" className={`${inter.variable}`} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${inter.variable} ${jetbrainsMono.variable} ${spaceGrotesk.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         {/* Runs before first paint, so the page is already the right theme when
             it appears. The toggle applies this class from an effect, which is
