@@ -24,6 +24,7 @@ A Researchathon project combining statistical analysis (Benford's Law), credit c
 Digits_Dont_Lie/
 ├── README.md
 ├── .gitignore
+├── scripts/                     ← cross-platform setup (see Quick Start)
 ├── Backend/
 │   ├── .env                     ← secrets (git-ignored)
 │   ├── .env.example             ← template for .env
@@ -53,7 +54,58 @@ Digits_Dont_Lie/
 
 ## Quick Start
 
-### Backend
+### Automatic setup (recommended)
+
+One command on any supported OS. It detects the operating system and package
+manager, installs Python, Node and Tesseract if they are missing, builds the
+virtualenv, installs both dependency trees, and generates matching API keys
+for the backend and the frontend proxy.
+
+```bash
+python3 scripts/setup.py             # Linux, macOS
+```
+
+```bat
+scripts\setup.bat                    :: Windows (or double-click it)
+```
+
+| Flag | Effect |
+|---|---|
+| `--check` | Report what is missing and change nothing |
+| `--update` | Upgrade an existing install instead of creating one |
+| `--skip-system` | Skip system packages, so no sudo or admin prompt |
+| `--verbose` | Show the full output of every command |
+| `--yes` | Do not pause for confirmation |
+
+`setup.py` uses only the Python standard library, because it is the program
+that runs before anything has been installed. It dispatches to the script for
+the detected platform:
+
+```
+scripts/
+├── setup.py            entry point: detection, terminal UI, dispatch
+├── setup_linux.sh      pacman / apt / dnf / zypper / apk
+├── setup_macos.sh      Homebrew
+├── setup_windows.ps1   winget / Chocolatey
+├── setup.bat           Windows double-click wrapper
+├── lib_unix.sh         steps shared by Linux and macOS
+└── init_env.py         creates .env files, keeps the two API keys matched
+```
+
+The platform scripts print a small marker protocol (`::step`, `::ok`, `::fail`,
+`::warn`) that `setup.py` renders as a live progress view. They also run
+standalone, if you would rather see the raw output:
+
+```bash
+bash scripts/setup_linux.sh install
+```
+
+Nothing here overwrites a value you have already set. Re-running setup on a
+machine with a working `GROQ_API_KEY` leaves it alone.
+
+### Manual setup
+
+#### Backend
 
 ```bash
 cd Backend
@@ -63,7 +115,7 @@ cp .env.example .env   # edit and set API_KEY
 uvicorn app.api.server:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### Frontend
+#### Frontend
 
 ```bash
 cd Frontend
