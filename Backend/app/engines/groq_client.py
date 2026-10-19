@@ -19,12 +19,14 @@ except ImportError:
 
 _log = logging.getLogger(__name__)
 
-_DEFAULT_MODEL = "llama-3.1-8b-instant"
+# llama-3.1-8b-instant, the previous default, was retired by Groq and every
+# call 404'd. gpt-oss-20b is the smallest, fastest text model still served.
+_DEFAULT_MODEL = "openai/gpt-oss-20b"
 # Verified against the live Groq model list as the only image-capable model
-# offered there — the llama-3.2-*-vision models were decommissioned and no
-# llama-4 multimodal model is exposed. It is a reasoning model, so requests must
+# offered there — qwen3.6 and the llama-3.2-*-vision models were decommissioned
+# and no llama-4 multimodal model is exposed. It is a reasoning model, so requests must
 # use json_mode to suppress its <think> preamble. Override with GROQ_VISION_MODEL.
-_DEFAULT_VISION_MODEL = "qwen/qwen3.6-27b"
+_DEFAULT_VISION_MODEL = "qwen/qwen3.8-27b"
 _DEFAULT_TEMPERATURE = 0.3
 _DEFAULT_MAX_TOKENS = 512
 _DEFAULT_TIMEOUT = 8

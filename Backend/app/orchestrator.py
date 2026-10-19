@@ -843,11 +843,7 @@ def _apply_ocr_validation(resp: AnalysisResponse, candidate: "OcrCardCandidate")
             f"any recognized card network."
         )
 
-    consensus_ratio = (
-        candidate.variant_agreement / candidate.total_variants
-        if candidate.total_variants > 0 else 0.0
-    )
-    low_consensus = consensus_ratio < 0.3
+    low_consensus = _has_low_consensus(candidate)
     if low_consensus:
         limitations.append(
             "Low OCR variant agreement — the extracted number may be inaccurate."
@@ -875,6 +871,54 @@ def _apply_ocr_validation(resp: AnalysisResponse, candidate: "OcrCardCandidate")
         )
 
     resp.limitations = limitations
+
+
+def _has_low_consensus(candidate: "OcrCardCandidate") -> bool:
+    """Whether too few OCR variants agreed on this reading to trust its digits."""
+    if candidate.total_variants <= 0:
+        return True
+    return candidate.variant_agreement / candidate.total_variants < 0.3
+
+
+def _vision_says_card(
+    vision: "VisionClassification | None", has_structure: bool
+) -> bool:
+    """Whether the vision model confidently saw a card on a page without document structure."""
+    return bool(
+        vision
+        and vision.confidence >= 0.70
+        and vision.value_type == "card_number"
+        and not has_structure
+    )
+
+
+def _vision_transcription_response(
+    transcribed: str,
+    vision: "VisionClassification | None",
+    *,
+    ocr_digits: str | None = None,
+) -> AnalysisResponse:
+    """Analyse a card number read by the vision model rather than by OCR."""
+    resp = analyze_single_value(transcribed, confirmed_value_type="card_number")
+    resp.extracted_data["ocr_card_candidate"] = transcribed
+    resp.extracted_data["source"] = "vision_transcription"
+    resp.classification_source = "automatic"
+    _record_vision_classification(resp, vision)
+    # Recorded so a reader can weigh the verdict: these digits were read
+    # by a model, not by the deterministic OCR path, and no second pass
+    # corroborated them.
+    limitations = list(resp.limitations) + [
+        "Card number was read by the vision model because OCR could not "
+        "extract it reliably; the digits themselves are uncorroborated."
+    ]
+    if ocr_digits:
+        resp.extracted_data["rejected_ocr_candidate"] = ocr_digits
+        limitations.append(
+            f"OCR produced a different, low-confidence reading ({len(ocr_digits)} "
+            "digits) that was discarded in favour of the vision transcription."
+        )
+    resp.limitations = limitations
+    return resp
 
 
 def _should_treat_as_card(
@@ -1022,6 +1066,23 @@ def _analyze_image(
         if not _should_treat_as_card(card_candidate, has_document_structure=has_structure):
             card_candidate = None
 
+    # A weak OCR reading — matching no card network, or one the OCR variants
+    # disagree on — is how stylised card type usually comes out: digits dropped
+    # or misread, yet still Luhn-valid by coincidence one time in ten. Keeping it
+    # only for _apply_ocr_validation to downgrade it to insufficient evidence
+    # meant a clearly legible card never got a verdict. When vision recognised
+    # the card, let it read the number too and prefer that reading.
+    if (
+        card_candidate
+        and _vision_says_card(vision, has_structure)
+        and (not card_candidate.network or _has_low_consensus(card_candidate))
+    ):
+        transcribed = _transcribe_card_with_vision(file_path)
+        if transcribed and transcribed != card_candidate.digits:
+            return _vision_transcription_response(
+                transcribed, vision, ocr_digits=card_candidate.digits
+            )
+
     if card_candidate:
         value_type = "card_number"
         if vision and vision.confidence >= 0.70 and vision.value_type != "card_number":
@@ -1049,27 +1110,10 @@ def _analyze_image(
     # multimodal model reads that type directly. A page with genuine
     # invoice/table structure is stronger, more specific evidence than a generic
     # vision guess and keeps the document path below.
-    if (
-        vision
-        and vision.confidence >= 0.70
-        and vision.value_type == "card_number"
-        and not has_structure
-    ):
+    if _vision_says_card(vision, has_structure):
         transcribed = _transcribe_card_with_vision(file_path)
         if transcribed:
-            resp = analyze_single_value(transcribed, confirmed_value_type="card_number")
-            resp.extracted_data["ocr_card_candidate"] = transcribed
-            resp.extracted_data["source"] = "vision_transcription"
-            resp.classification_source = "automatic"
-            _record_vision_classification(resp, vision)
-            # Recorded so a reader can weigh the verdict: these digits were read
-            # by a model, not by the deterministic OCR path, and no second pass
-            # corroborated them.
-            resp.limitations = list(resp.limitations) + [
-                "Card number was read by the vision model because OCR could not "
-                "extract it reliably; the digits themselves are uncorroborated."
-            ]
-            return resp
+            return _vision_transcription_response(transcribed, vision)
 
         resp = AnalysisResponse()
         resp.overall_status = OverallStatus.INSUFFICIENT_EVIDENCE
