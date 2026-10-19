@@ -23,6 +23,7 @@ A Researchathon project combining statistical analysis (Benford's Law), credit c
 ```
 Digits_Dont_Lie/
 ├── README.md
+├── PORTABLE.md                  ← moving it to another machine
 ├── .gitignore
 ├── scripts/                     ← cross-platform setup (see Quick Start)
 ├── docs/
@@ -91,7 +92,11 @@ scripts/
 ├── setup_windows.ps1   winget / Chocolatey
 ├── setup.bat           Windows double-click wrapper
 ├── lib_unix.sh         steps shared by Linux and macOS
-└── init_env.py         creates .env files, keeps the two API keys matched
+├── init_env.py         creates .env files, keeps the two API keys matched
+├── run.py              starts both servers together (see Running it)
+├── run.sh              Linux/macOS wrapper for run.py
+├── run.bat             Windows double-click wrapper for run.py
+└── package.py          builds the portable zip (see Portable copy)
 ```
 
 The platform scripts print a small marker protocol (`::step`, `::ok`, `::fail`,
@@ -136,21 +141,40 @@ cp .env.local.example .env.local   # set BACKEND_URL and BACKEND_API_KEY
 npm run dev          # http://localhost:3000
 ```
 
-### Running it for a demo
+### Running it
 
-`npm run dev` recompiles each route the first time it is opened, so the first
-click on a page stalls for a moment. For anything being shown to an audience,
-serve the production build instead — it is compiled ahead of time and starts in
-well under a second:
+Both servers have to be up. One command starts them together, tags each line of
+output with the server it came from, and stops both on `Ctrl+C`:
 
 ```bash
-cd Frontend
-npm run build
-npm start            # http://localhost:3000
+python3 scripts/run.py               # Linux, macOS  (or ./scripts/run.sh)
 ```
 
-Both servers must be running. The footer reports which mode the interface is
-actually in: **Backend: Connected** means results come from the FastAPI engines;
+```bat
+scripts\run.bat                      :: Windows (or double-click it)
+```
+
+| Flag | Effect |
+|---|---|
+| *(none)* | Production build — **use this to demo** |
+| `--dev` | Next.js dev server with hot reload |
+| `--rebuild` | Force a fresh production build first |
+| `--backend-only` | FastAPI alone on `127.0.0.1:8000` |
+| `--frontend-only` | Next.js alone; the UI falls back to browser-side analysis |
+
+The default is the production build on purpose. `npm run dev` recompiles each
+route the first time it is opened, so the first click on a page stalls for a
+moment; the production build is compiled ahead of time and starts in well under
+a second. `run.py` builds it for you if `.next` is missing.
+
+To drive the two servers by hand instead:
+
+```bash
+cd Backend && .venv/bin/uvicorn app.api.server:app --host 127.0.0.1 --port 8000
+cd Frontend && npm run build && npm start
+```
+
+The footer reports which mode the interface is actually in: **Backend: Connected** means results come from the FastAPI engines;
 **Backend: Offline** means the browser-side fallback produced them. If the
 backend stops mid-session, an amber banner says so and the result below it is a
 fallback result — the interface never presents client-side output as though it
@@ -159,6 +183,34 @@ came from the real engine.
 The frontend never talks to the FastAPI backend directly from the browser — `lib/api.ts` calls this app's own `/api/*` route handlers (`app/api/**/route.ts`), which hold `BACKEND_URL`/`BACKEND_API_KEY` server-side and proxy the request through. This keeps the shared API key out of the client JS bundle.
 
 The frontend auto-detects whether the backend is running. When the backend is offline, it falls back to client-side analysis. When connected, it uses the full FastAPI engine with OCR, Benford chi-square tests, and Groq-powered explanations.
+
+---
+
+## Portable copy
+
+To move the project to another machine — a fair laptop, a second computer, a
+USB stick — build the archive:
+
+```bash
+python3 scripts/package.py           # → Digits_Dont_Lie_portable.zip
+```
+
+It carries the source, the setup and run scripts and the docs, and leaves out
+`.venv`, `node_modules`, `.next` and the caches. Those are compiled for one OS
+and CPU, so copying them across devices produces a broken install rather than a
+portable one; the receiving machine runs `scripts/setup.py` once and rebuilds
+them natively.
+
+By default `Backend/.env` and `Frontend/.env.local` travel inside the zip, so
+the app works the moment setup finishes. **That puts live API keys in the
+file** — keep it off public shares. To build one without them:
+
+```bash
+python3 scripts/package.py --no-secrets
+```
+
+`PORTABLE.md`, included in the archive, is the instruction sheet for whoever
+unzips it.
 
 ---
 

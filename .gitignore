@@ -33,3 +33,6 @@ opencode.json.save
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# --- Portable bundle: built by scripts/package.py, carries .env secrets ---
+*_portable.zip

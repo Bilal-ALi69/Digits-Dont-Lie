@@ -635,13 +635,18 @@ def main(argv: list[str] | None = None) -> int:
     print()
     print(S.green(f"  {S.tick} Ready."))
     print()
-    print(S.bold("  Start the backend"))
+    print(S.bold("  Start both servers"))
+    if host["system"] == "Windows":
+        print(S.dim("    scripts\\run.bat") + S.dim("                     http://localhost:3000"))
+    else:
+        print(S.dim("    python3 scripts/run.py") + S.dim("           http://localhost:3000"))
+    print()
+    print(S.bold("  Or one at a time"))
     if host["system"] == "Windows":
         print(S.dim("    cd Backend; .venv\\Scripts\\activate; uvicorn app.api.server:app --reload --port 8000"))
     else:
         print(S.dim("    cd Backend && source .venv/bin/activate && uvicorn app.api.server:app --reload --port 8000"))
-    print(S.bold("  Start the frontend"))
-    print(S.dim("    cd Frontend && npm run dev") + S.dim("        http://localhost:3000"))
+    print(S.dim("    cd Frontend && npm run dev"))
     print()
     return 0
 
